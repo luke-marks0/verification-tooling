@@ -1,0 +1,52 @@
+[
+  {
+    "prompt": "Explain how photosynthesis works in one paragraph.",
+    "content_hash": "3e83d96502a00c8229e01de3df04432edfd6d120ab9df9e62fd92d255d797743",
+    "tokens": 127
+  },
+  {
+    "prompt": "What is the difference between a virus and a bacterium?",
+    "content_hash": "2e4cfc088e6c706bcab4eb9bf692cceb428708e3073e522ac0f7c21fe630861e",
+    "tokens": 256
+  },
+  {
+    "prompt": "Why is the sky blue during the day and red at sunset?",
+    "content_hash": "e1357013ddc39190116a7880507dd9b5c922396a893395ee46e13342cb9d340c",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe the structure of a typical neuron.",
+    "content_hash": "0dd3db40c4d396bae53ea28de2ad7f13624843e4c7bc86f41089fcdd8b08de17",
+    "tokens": 256
+  },
+  {
+    "prompt": "Explain how vaccines train the immune system.",
+    "content_hash": "8ee3097eea7011e079d30b5c4469016876b9a95a71a571766ac58a9bbb4066e9",
+    "tokens": 180
+  },
+  {
+    "prompt": "What is quantum entanglement in plain English?",
+    "content_hash": "e423ea9710ed4469fcc0f788500f84caed65b5b4370bfac784e28a66048c5973",
+    "tokens": 256
+  },
+  {
+    "prompt": "Why do leaves change color in autumn?",
+    "content_hash": "40b448fd747d8e1a65fc1175d5fdbece80e844855b649f785926a037db162465",
+    "tokens": 194
+  },
+  {
+    "prompt": "Describe the life cycle of a star like our sun.",
+    "content_hash": "1cd55ce550a6f47123c2943c6736c85210e97dd1287cfc320f4222ae3cc8975b",
+    "tokens": 256
+  },
+  {
+    "prompt": "How does a refrigerator keep food cold?",
+    "content_hash": "e6df580712cb036da4569a5cf63971efb7cd2a7469b36d87215e0a8c8914fde3",
+    "tokens": 256
+  },
+  {
+    "prompt": "Explain how a transistor amplifies a signal.",
+    "content_hash": "8a2f30f60ab9628be0d1c3575b64b8bea1a7aba3c14bdadea6b71a610d225b30",
+    "tokens": 183
+  }
+]

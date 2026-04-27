@@ -1,0 +1,502 @@
+[
+  {
+    "prompt": "Explain how photosynthesis works in one paragraph.",
+    "content_hash": "3e83d96502a00c8229e01de3df04432edfd6d120ab9df9e62fd92d255d797743",
+    "tokens": 127
+  },
+  {
+    "prompt": "What is the difference between a virus and a bacterium?",
+    "content_hash": "a83ea4c523af6b057fc2ce5d80f41d1cf4adeb464442f03e85ef9dd022d7978b",
+    "tokens": 256
+  },
+  {
+    "prompt": "Why is the sky blue during the day and red at sunset?",
+    "content_hash": "1c9a67879592d5177998e20940ef686183e24ca3dee2e4dd7dcfd498f4acdd16",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe the structure of a typical neuron.",
+    "content_hash": "3348ec1a140bbd90e8490d7653cec857d208c2de64cf09d70275d64a6b80e050",
+    "tokens": 256
+  },
+  {
+    "prompt": "Explain how vaccines train the immune system.",
+    "content_hash": "256edeed7dee2cc35171f41c2ef9d302087fbebbdf983bacb85aab71bc083bfa",
+    "tokens": 212
+  },
+  {
+    "prompt": "What is quantum entanglement in plain English?",
+    "content_hash": "e0be2f0bd29240ca3b029fc90645feb1f2b6f6d7ecac8d9a8e78bb7745e1c00a",
+    "tokens": 256
+  },
+  {
+    "prompt": "Why do leaves change color in autumn?",
+    "content_hash": "056acfb492e0f462cafd5db83f80febc88761920b12013ce43d2a3e7abb112c0",
+    "tokens": 196
+  },
+  {
+    "prompt": "Describe the life cycle of a star like our sun.",
+    "content_hash": "a6c042e919c90c63172a50027c2e0b30a54e812cc8f06f0d8a2e240d0f185940",
+    "tokens": 256
+  },
+  {
+    "prompt": "How does a refrigerator keep food cold?",
+    "content_hash": "538674529fc2d7cd4b7a3854653e0d32ba4ccf170af1fa948b590f1b757dbe21",
+    "tokens": 256
+  },
+  {
+    "prompt": "Explain how a transistor amplifies a signal.",
+    "content_hash": "afcdc6a85d05abace81f1a360987275312c567518d16bb778caa4159e22865d0",
+    "tokens": 134
+  },
+  {
+    "prompt": "Summarize the causes of World War I in three sentences.",
+    "content_hash": "4869e117ea79c4007c349395a9ca2d2c08144c709ca2f3e259bee79733a604a5",
+    "tokens": 256
+  },
+  {
+    "prompt": "Who built the Great Wall of China and when?",
+    "content_hash": "0d8cfa5b55faac3e664d407d092e0928f06a970a25e6102058cf9f156c8c242b",
+    "tokens": 256
+  },
+  {
+    "prompt": "List five interesting facts about the Roman Empire.",
+    "content_hash": "918c8d6ed932bf13bce510f54cdb313df6044b63f515c3f5fdae397536a05db3",
+    "tokens": 256
+  },
+  {
+    "prompt": "What was the Industrial Revolution and where did it start?",
+    "content_hash": "f9267b6753cd47988a7559868aa1b9bcd05d7502818490b9bcf781c964177ba2",
+    "tokens": 123
+  },
+  {
+    "prompt": "Who was Cleopatra and what made her famous?",
+    "content_hash": "758f24d54de87e21bc7bbd19d58896cfd382933fcd14828546bc48a5f8c81704",
+    "tokens": 132
+  },
+  {
+    "prompt": "Describe the impact of the printing press on Europe.",
+    "content_hash": "cd2ed99d5166f6ed6401db9d78eb5798f807ba26373b58f5b28297ce59ebbc7a",
+    "tokens": 256
+  },
+  {
+    "prompt": "What ended the cold war?",
+    "content_hash": "3225c0f976091c8896360164935507bfa7fcd8b0e364571ff18c9fb4a8558885",
+    "tokens": 256
+  },
+  {
+    "prompt": "Tell me about the silk road in two paragraphs.",
+    "content_hash": "a7df1a52bea0cadca991df1496c4d7057d016e64f1d75511578586a56f9d7028",
+    "tokens": 194
+  },
+  {
+    "prompt": "Who was Genghis Khan?",
+    "content_hash": "b0f61b890193971e39832a00a0288c5ebbd639c0a10e38203bbd7bcd676f64db",
+    "tokens": 132
+  },
+  {
+    "prompt": "Why did the Roman Empire fall?",
+    "content_hash": "4b6beaf6a50e956cd1555939978787ed426635b44bea2908acd89ee75986139d",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is the Pythagorean theorem and why does it matter?",
+    "content_hash": "0b482430ec38f11ebb563bc837e81b56beb8a32bedd446caa3677681559907a1",
+    "tokens": 256
+  },
+  {
+    "prompt": "Explain the difference between mean and median.",
+    "content_hash": "6df7df3e70be648d66757189caf1fa929e7c4ad10d278377eed6e29ca936a4c2",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is a derivative in calculus?",
+    "content_hash": "917c48246232f42087a84c392a839e6e439bc4f0d4df3abf99c103bd9a9953a9",
+    "tokens": 154
+  },
+  {
+    "prompt": "How do you compute the area of a circle?",
+    "content_hash": "c05600b8ce24fc9a1421caaae637e4387f6ee76666b1ec8962742b27f7dbc71f",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is a prime number? Give five examples.",
+    "content_hash": "2e48d9d44b2cc1962edd7a1c90290931f6dbe4471e5894c25fa4278b730cd960",
+    "tokens": 147
+  },
+  {
+    "prompt": "Explain Bayes' theorem with a simple example.",
+    "content_hash": "49473a4a64a06fb1a3f4c56b260a813d661cfb4ad4e60e4e317d0b132a53418d",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is the Fibonacci sequence?",
+    "content_hash": "19205292dd8dac61fe9f6d1b23bd10edceb54392a400272a226d0e9b73ee5ce8",
+    "tokens": 218
+  },
+  {
+    "prompt": "Why is zero a special number?",
+    "content_hash": "5320620198b647c5a08a7eee1e9c6771a69c1285f042af0b6f27e806be1fa6cc",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is the difference between an integer and a real number?",
+    "content_hash": "ff20216bc5d385144c00ee67816da56bc91a440c44e1daaad6a5d82733d8802a",
+    "tokens": 159
+  },
+  {
+    "prompt": "Explain the concept of infinity.",
+    "content_hash": "ce527cf9b1c4c42ff482661f6b5002979855ed4444722f188b590dfe13da3dea",
+    "tokens": 185
+  },
+  {
+    "prompt": "What is the difference between a list and a tuple in Python?",
+    "content_hash": "55e4ba064f0869de46908033f9a16685597b2bc1fad896fe5104c91e533a7061",
+    "tokens": 256
+  },
+  {
+    "prompt": "Explain recursion using a simple example.",
+    "content_hash": "6be3ed04d9c5349efdb53ae65de85621b3d0a9629f331bb827d7a19f0d55a70a",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is a hash table and when would you use one?",
+    "content_hash": "40bd2c0250ff4ca0c1fc18ac42b39d824a66f2bae94b5a40c637144c99cb80bc",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe the difference between TCP and UDP.",
+    "content_hash": "ad295c60745910061b9e142d7a420b00a12a02357c48a784c53d3f2d62481b5f",
+    "tokens": 256
+  },
+  {
+    "prompt": "What does the word 'compiler' mean?",
+    "content_hash": "020fa220e6c1443f4349e7e4a733e5c7da3404c62d896cae4ad87a23f411bccb",
+    "tokens": 256
+  },
+  {
+    "prompt": "Explain what a Git merge conflict is.",
+    "content_hash": "9bd1fb517a3d3a3fa203c724e8a13a452ec3aed8f04c007757d5353e82ac77d2",
+    "tokens": 106
+  },
+  {
+    "prompt": "What is the difference between a stack and a queue?",
+    "content_hash": "fca62bf14c17d423b587bb51d676b46bc91ca21a63f30267303facc51e8908e6",
+    "tokens": 209
+  },
+  {
+    "prompt": "What is Big O notation?",
+    "content_hash": "1bc48908f60c48b18f2dc214f9c06a51ea6b856b9b8dd7e9e0ab85121f574074",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe how DNS resolves a domain name.",
+    "content_hash": "1b36488729e89f53b1430176488ef94fe5ee75dd5108fc9f57d75781a01a3f46",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is a race condition?",
+    "content_hash": "03351b5324bd129250c7146d7cd06c6ce97984b09dcbbeba89232200ca9e2a83",
+    "tokens": 170
+  },
+  {
+    "prompt": "Summarize the plot of Hamlet in three sentences.",
+    "content_hash": "050097469d25480f9db3882381d16e5f25e7c94b60751da9e44d0f37dc90891b",
+    "tokens": 93
+  },
+  {
+    "prompt": "Who wrote Pride and Prejudice and when?",
+    "content_hash": "ac246baeb1f6784f0ab9974520e8198069a8e649ad4164cd22d6076a620c2ba6",
+    "tokens": 139
+  },
+  {
+    "prompt": "Describe the style of Vincent van Gogh's paintings.",
+    "content_hash": "ae703ce9a3ebe7b6adb4aa000b570f25a6a5d10fd40710fdaa3d274f8c23d640",
+    "tokens": 121
+  },
+  {
+    "prompt": "What is iambic pentameter?",
+    "content_hash": "7d67f1dfafb041f9f7a3bce46b20b024f875064e1709b001cad516a558d36b8c",
+    "tokens": 256
+  },
+  {
+    "prompt": "Tell me about the Beat Generation writers.",
+    "content_hash": "122b8af6cc5adc3a5defa88e9c5a9eab6330ce5e9f82e66b4e0717fd60b0e670",
+    "tokens": 152
+  },
+  {
+    "prompt": "Who painted the Mona Lisa?",
+    "content_hash": "b1c6ff3dc878fa292fc5c52cee721a163c4b64c8f0fb09819158664af6b7c484",
+    "tokens": 102
+  },
+  {
+    "prompt": "What is magical realism?",
+    "content_hash": "8a4a06120e89809186c014e8d70ac7210baf7b4a7f8411779e961a88e438e0a4",
+    "tokens": 185
+  },
+  {
+    "prompt": "Describe the plot of The Great Gatsby in two sentences.",
+    "content_hash": "881d9eb66fa1e2daa75908087ad70d3eaebaffb59ded7aeaacd6a8f8d3518c02",
+    "tokens": 69
+  },
+  {
+    "prompt": "Who composed The Four Seasons?",
+    "content_hash": "aa6cb47e3bb5b210b9bb2f1f1ce6893ca716f73c41c3eef00c716c92b18655ee",
+    "tokens": 176
+  },
+  {
+    "prompt": "What was the Harlem Renaissance?",
+    "content_hash": "4d856a6710661a5119837c93ae64959da53b544bfd8be4fc453eb5078f2e8662",
+    "tokens": 140
+  },
+  {
+    "prompt": "Describe how to make a simple loaf of sourdough bread.",
+    "content_hash": "8097bc73160203e9c8a476b5b0ee3ff74abec0abe1a44a887221885c88f8a577",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe the steps to brew a perfect cup of coffee.",
+    "content_hash": "61d1c32e556d5d01f6ca3c32f709ecdf12d6ca6a3d36515b836030bf9740a98a",
+    "tokens": 256
+  },
+  {
+    "prompt": "How do you wash a wool sweater without ruining it?",
+    "content_hash": "5b61cf02ad55b779d7e000c304d7187ed76287b6553530c9e9da056209984765",
+    "tokens": 256
+  },
+  {
+    "prompt": "How do you change a bicycle tire?",
+    "content_hash": "64465536c6506716a9fbf2fdfbe9947a040b35ce6f0e567a63d32819c91e278e",
+    "tokens": 256
+  },
+  {
+    "prompt": "Give me three tips for sleeping better.",
+    "content_hash": "92055b0d087de2d8d372846f57e3fcbda66ea4b7d944e57a4ed8fe5e02f15d76",
+    "tokens": 164
+  },
+  {
+    "prompt": "How do you boil an egg perfectly?",
+    "content_hash": "b01456a4261dddecf0b8df974f779266c14dd2adc5379b3ca53cdeac6e48d4a0",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is the best way to remove a wine stain?",
+    "content_hash": "f93c33fc8f292edd66384e17e3d5632cc6af211745e8ed9ba89afd08589031f2",
+    "tokens": 256
+  },
+  {
+    "prompt": "How do you fold a fitted sheet?",
+    "content_hash": "1e9bb014c7fcd574f498b0f9a44dbb7331c1ecb8829a83317de897ff410ff21b",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe how to make a simple omelette.",
+    "content_hash": "ee81be09b0e2b09eef4b1fed8687d78f4f5f039c963b638c1643fea696207295",
+    "tokens": 256
+  },
+  {
+    "prompt": "How do you sharpen a kitchen knife?",
+    "content_hash": "06e5384ae24b4c4bd8e49d54011c747e39472f8b52c497b630eac44750a0e08f",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe a sunset over the ocean in vivid detail.",
+    "content_hash": "470f01a9a59b347216d55534d9303360115f1e340ada38e940b356f583a4f396",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe the taste of a perfectly ripe mango.",
+    "content_hash": "b0ec69cd3af2fb886db81ae4691a2a6329d08ed5774897b4aaf877a7f4cb0ec3",
+    "tokens": 128
+  },
+  {
+    "prompt": "Write a haiku about winter mornings.",
+    "content_hash": "a8a4a59c14847789cf49a1ff9239798b07136112b947951d8b6b649abc57b1df",
+    "tokens": 256
+  },
+  {
+    "prompt": "Write a short poem about a cat watching rain.",
+    "content_hash": "43979720639f47446dc8186a5789e4ce26b3c7e11b5ce93b2f84d061e5a2c570",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe the smell of freshly baked bread.",
+    "content_hash": "62909b52030a805be49bd5626433b78cf32f458152244431c9697bc0874c98a3",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe a thunderstorm at midnight.",
+    "content_hash": "aa8cf2bcf15c6884220f04be1ae94a6a5ee68e4eac2e5a6638e9e7574a966d7d",
+    "tokens": 256
+  },
+  {
+    "prompt": "Write a short poem about an old lighthouse.",
+    "content_hash": "c54ceca286e5f06823f31d7b5b06d71968f1d7719454ad5ce63aec8e56f7787e",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe a bustling open-air market.",
+    "content_hash": "95d77521903d7524b4050e76c0f52c8b09ea3d78c0faa02bf2487e92ce85882c",
+    "tokens": 234
+  },
+  {
+    "prompt": "Write a haiku about autumn leaves.",
+    "content_hash": "f73f8a44a7d2cb1c4f816881881045b419a63e8f9474e0bbdf642751f8e9d560",
+    "tokens": 256
+  },
+  {
+    "prompt": "Describe the feeling of stepping into the ocean for the firs",
+    "content_hash": "804cca0b035f8bc6a29d049366c86a86b9c9ace8c4648f290d1ea666f66609aa",
+    "tokens": 150
+  },
+  {
+    "prompt": "What is the capital of Australia and why is it not Sydney?",
+    "content_hash": "af3ac4f69462c156ec93b9754f85c709a31708c83d1390868b38318eed6af5e0",
+    "tokens": 179
+  },
+  {
+    "prompt": "List the planets of the solar system in order.",
+    "content_hash": "71e7f50a64c8aa29ab52730a3c37a3e65ab13b70167cff9c60555f25790ec198",
+    "tokens": 29
+  },
+  {
+    "prompt": "What is the longest river in the world and where does it flo",
+    "content_hash": "85cd2af7ca8b6b347094025a251cf3f66df218bcab54c1957d26f5b5c6fe261c",
+    "tokens": 256
+  },
+  {
+    "prompt": "Name three countries that border Switzerland.",
+    "content_hash": "135a6b1b69d194b3b33b10de4f0220076aae1f5769fdf662d29ca52fc15bf722",
+    "tokens": 16
+  },
+  {
+    "prompt": "What is the highest mountain in Africa?",
+    "content_hash": "71dddd11f133980206855bd567a8a94e8f94b9508868f16ceac1489190312b53",
+    "tokens": 136
+  },
+  {
+    "prompt": "What language is spoken in Brazil?",
+    "content_hash": "276ed2c7f4ee0d44e2a8c4694d9ee3b9f5c491fbb333cf9522b5817c981a4598",
+    "tokens": 256
+  },
+  {
+    "prompt": "Where is the Amazon rainforest?",
+    "content_hash": "b10666e0bc5000cbf08094ec13bf30c8ba814951c2040962ee9b143570698ac0",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is the smallest country in the world?",
+    "content_hash": "70ef497fa23a1c8c568a4de9e0d08d52e10b6721b7cde70348134306b3ae6c68",
+    "tokens": 208
+  },
+  {
+    "prompt": "What ocean separates the Americas from Europe and Africa?",
+    "content_hash": "7886320951e7751ed4b621921ee8462face99de12e882f0d1761f5b7fe68e657",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is the deepest known point in the ocean?",
+    "content_hash": "21b9ce455c748c74bd4170c8384935ba308e1a2572ee19e32662e5c784f0f46f",
+    "tokens": 256
+  },
+  {
+    "prompt": "Explain the concept of gravity to a curious child.",
+    "content_hash": "bb80c277828e23f21a550c8fd9f19bab2c7e455d065c2be4b9448cfd909001bb",
+    "tokens": 93
+  },
+  {
+    "prompt": "What are the main causes of climate change?",
+    "content_hash": "070908e2028f5fe09f9d39a7194ee57cab13db5f3f77cdf9398137ebf1c405bb",
+    "tokens": 241
+  },
+  {
+    "prompt": "What is the difference between machine learning and AI?",
+    "content_hash": "5824af55ac7f6801aa5059d18b9017a73342c9a116b37065fe0a21a8a1f8f336",
+    "tokens": 128
+  },
+  {
+    "prompt": "Tell me about the life cycle of a butterfly.",
+    "content_hash": "658e5f14a513cbadf90859f6eb055f7721c9bc3c388f45cc1609415e5c9afb7d",
+    "tokens": 256
+  },
+  {
+    "prompt": "How do birds know where to fly during migration?",
+    "content_hash": "f9f417bbd898c444c88c39bc6c46507a070fcb5bc47a49e41ce1b3099a0332bf",
+    "tokens": 131
+  },
+  {
+    "prompt": "What is photosynthesis in one sentence?",
+    "content_hash": "148cfd72b3890e95c71190bf4b86279d5adb029dcd5e4e29a83c68bc16ff0cc5",
+    "tokens": 22
+  },
+  {
+    "prompt": "Describe how a microwave oven heats food.",
+    "content_hash": "e6e312117b3cb484a93a27913ffef7d386f77f033028e6eacde28b3aa371fced",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is gluten and why does it matter for bread?",
+    "content_hash": "ebfe644e72787825acd8a2a2ef85aec86c59223a6ac61233d14394dabaa1670e",
+    "tokens": 256
+  },
+  {
+    "prompt": "Explain in plain words what a black hole is.",
+    "content_hash": "a27cb126b9c2005712fa883f0995392fee482c354529cd590273a87cc7eaa430",
+    "tokens": 168
+  },
+  {
+    "prompt": "What does it mean for a number to be 'irrational'?",
+    "content_hash": "1c9a3ee965f493252bce774e1b5890a64f1da6639e91b3bc50a7dace123d0af0",
+    "tokens": 256
+  },
+  {
+    "prompt": "Hello.",
+    "content_hash": "d7879d411a15ee68bec5d7d726941caedb4460fb126cbe87d09c7cdca6a664ea",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is 2 + 2?",
+    "content_hash": "89c699e2c9bc7eb71aae12e764c10797857e9afda15da1091953a8f3f3b62797",
+    "tokens": 81
+  },
+  {
+    "prompt": "Name three colors.",
+    "content_hash": "c58d3e8ce448dfd5a46f7c537a0c0010b32b056dbae3f45f9058485928b910e4",
+    "tokens": 256
+  },
+  {
+    "prompt": "Say 'good morning' in five languages.",
+    "content_hash": "a3595f92404482c17db6f398d9d4e4f2aa6fa11963d0ad4f9b337b9c6889c347",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is the speed of light?",
+    "content_hash": "c2c2da65b07bd30c5f6929c2c493ffe233ec722863b507a7d2645b22c148faf5",
+    "tokens": 256
+  },
+  {
+    "prompt": "Translate 'thank you' to French.",
+    "content_hash": "5c6e2cb2427a4a9228ed9fb6626e82dac8f4a6670f139f9e7a5d09c028357592",
+    "tokens": 256
+  },
+  {
+    "prompt": "What is the boiling point of water?",
+    "content_hash": "5f62b8ff5cf7c7f18be9027652ae91b3d097996a0b9c049498922f9536fb3780",
+    "tokens": 132
+  },
+  {
+    "prompt": "Spell 'serendipity'.",
+    "content_hash": "34fb333c28236fa3363519503d1e32f13e9807eccb58dc3a01e9249292340c7e",
+    "tokens": 256
+  },
+  {
+    "prompt": "Count from one to ten.",
+    "content_hash": "501f0764d7212725256dcc39b1d67e38199a3d73eb4bacc2ba2006ca9b49c3ef",
+    "tokens": 184
+  },
+  {
+    "prompt": "What day comes after Wednesday?",
+    "content_hash": "d4ce5de51f4419ac8dd2cbbb8e93b2cfcfa1b2411b668c6b4cfae6f553e511a8",
+    "tokens": 92
+  }
+]
