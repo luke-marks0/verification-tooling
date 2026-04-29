@@ -1,0 +1,449 @@
+#!/usr/bin/env python3
+"""SM occupancy sweep — dial active fraction of GPU cores to a target.
+
+Public API
+----------
+
+::
+
+    from sm_occupancy_sweep import OccupancyController
+
+    ctrl = OccupancyController()  # auto-detects #SMs, JIT-compiles kernel
+    ctrl.occupy(fraction=0.50, duration_s=1.0)  # run on ~50% of SMs for 1 s
+    ctrl.occupy(fraction=0.25)                  # 25%, default 1 s
+
+    # Sweep with measurement:
+    rows = ctrl.sweep([0.01, 0.10, 0.25, 0.50, 0.75, 1.00, 1.50, 2.00],
+                      duration_s=1.0, with_telemetry=True)
+
+The kernel is JIT-compiled once via ``torch.utils.cpp_extension.load_inline``.
+It uses 96 KB of dynamic shared memory per block — on A100 (164 KB SMEM/SM)
+this forces the hardware scheduler to place at most one block per SM, so
+``grid_size = N`` blocks ⇒ exactly N SMs active in parallel.
+
+For ``fraction > 1.0``, blocks queue: power saturates at TDP, kernel wall
+time scales by ``ceil(N / n_sms)``.
+
+CLI
+---
+
+::
+
+    python3 sm_occupancy_sweep.py \\
+        --out data/sm_occupancy/sweep_a100.json \\
+        --md-out reports/sm_occupancy_a100.md \\
+        --percentages 0.5,1,5,10,25,50,75,90,100,150,200 \\
+        --duration-s 1.0
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import time
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from pkg.common.deterministic import canonical_json_text, utc_now_iso
+
+
+# 96 KB per block forces 1 block / SM on A100/H100 (≥48 KB SMEM/SM
+# always available; opt-in via cudaFuncSetAttribute extends to 100/132/164).
+SMEM_BYTES_PER_BLOCK = 96 * 1024
+THREADS_PER_BLOCK = 1024
+
+
+CUDA_SRC = r"""
+#include <torch/extension.h>
+#include <cuda_runtime.h>
+
+// 96 KB / 4 B = 24576 floats, populated cooperatively by 1024 threads.
+#define BUSY_SMEM_FLOATS 24576
+
+extern "C" __global__
+__launch_bounds__(1024, 1)
+void busy_kernel(float* __restrict__ scratch, int n_iters, int seed) {
+    extern __shared__ float smem[];
+    int tid = threadIdx.x;
+    int bdim = blockDim.x;
+
+    // Cooperatively initialise 96 KB of smem so the compiler can't elide
+    // the dynamic shared allocation. Without real smem usage, the hardware
+    // may pack multiple blocks per SM.
+    for (int i = tid; i < BUSY_SMEM_FLOATS; i += bdim) {
+        smem[i] = (float)(seed + i + (int)blockIdx.x);
+    }
+    __syncthreads();
+
+    float x = smem[tid];
+    for (int i = 0; i < n_iters; i++) {
+        x = fmaf(x, 1.0001f, 0.5f);
+    }
+
+    // Round-trip through smem with a cross-thread dependency, then write
+    // scratch UNCONDITIONALLY — guarantees the FMA loop's result is live
+    // and the compiler must keep both the loop and the smem traffic.
+    smem[tid] = x;
+    __syncthreads();
+    scratch[(int)blockIdx.x * bdim + tid] = smem[(tid + 1) & (bdim - 1)];
+}
+
+void launch_busy(torch::Tensor scratch,
+                 int64_t grid,
+                 int64_t threads,
+                 int64_t n_iters,
+                 int64_t seed,
+                 int64_t smem_bytes) {
+    cudaFuncSetAttribute((const void*)busy_kernel,
+        cudaFuncAttributeMaxDynamicSharedMemorySize, (int)smem_bytes);
+    busy_kernel<<<(unsigned)grid, (unsigned)threads, (unsigned)smem_bytes>>>(
+        scratch.data_ptr<float>(),
+        (int)n_iters,
+        (int)seed);
+}
+"""
+
+
+CPP_DECL = r"""
+#include <torch/extension.h>
+void launch_busy(torch::Tensor scratch,
+                 int64_t grid,
+                 int64_t threads,
+                 int64_t n_iters,
+                 int64_t seed,
+                 int64_t smem_bytes);
+"""
+
+
+def _build_extension(verbose: bool = False):
+    from torch.utils.cpp_extension import load_inline
+    return load_inline(
+        name="sm_occupancy_busy_v1",
+        cpp_sources=CPP_DECL,
+        cuda_sources=CUDA_SRC,
+        functions=["launch_busy"],
+        verbose=verbose,
+        with_cuda=True,
+        extra_cuda_cflags=["-O3"],
+    )
+
+
+class OccupancyController:
+    """Run a CUDA busy kernel on a chosen fraction of GPU SMs."""
+
+    def __init__(self, target_kernel_ms: float = 1000.0, verbose_compile: bool = False):
+        import torch
+        if not torch.cuda.is_available():
+            raise RuntimeError("CUDA not available")
+        self.torch = torch
+        self.device_name = torch.cuda.get_device_name(0)
+        cap = torch.cuda.get_device_capability(0)
+        self.compute_capability = f"{cap[0]}.{cap[1]}"
+        props = torch.cuda.get_device_properties(0)
+        self.n_sms = int(props.multi_processor_count)
+        self.total_smem_per_sm = int(getattr(props, "shared_memory_per_multiprocessor", 0))
+        self.ext = _build_extension(verbose=verbose_compile)
+        # Calibrate iters so a single-block run (1 SM busy) takes ~target_kernel_ms.
+        self.n_iters = self._calibrate_iters(target_kernel_ms)
+        # Reusable scratch sized for a full-GPU launch (1024 floats / SM).
+        self._scratch = torch.empty(self.n_sms * THREADS_PER_BLOCK,
+                                    dtype=torch.float32, device="cuda")
+
+    def _calibrate_iters(self, target_ms: float) -> int:
+        torch = self.torch
+        scratch = torch.empty(THREADS_PER_BLOCK, dtype=torch.float32, device="cuda")
+        n_iters = 100_000
+        # Two-stage: ramp until measurable, then scale to target. Cap so a
+        # mis-measurement can't blow iters into the billions.
+        cap = 200_000_000
+        for _ in range(8):
+            torch.cuda.synchronize()
+            t0 = time.perf_counter()
+            self.ext.launch_busy(scratch, 1, THREADS_PER_BLOCK, n_iters, 0,
+                                 SMEM_BYTES_PER_BLOCK)
+            torch.cuda.synchronize()
+            dt = (time.perf_counter() - t0) * 1000.0
+            if dt < 1.0:
+                n_iters = min(cap, n_iters * 8)
+                continue
+            scale = target_ms / dt
+            n_iters = max(1_000, min(cap, int(n_iters * scale)))
+            # One more pass to refine.
+            torch.cuda.synchronize()
+            t0 = time.perf_counter()
+            self.ext.launch_busy(scratch, 1, THREADS_PER_BLOCK, n_iters, 0,
+                                 SMEM_BYTES_PER_BLOCK)
+            torch.cuda.synchronize()
+            dt2 = (time.perf_counter() - t0) * 1000.0
+            print(f"[occ] cal: n_iters={n_iters} dt={dt2:.1f} ms", file=sys.stderr)
+            return n_iters
+        return n_iters
+
+    def fraction_to_blocks(self, fraction: float) -> int:
+        if fraction <= 0:
+            return 0
+        return max(1, round(fraction * self.n_sms))
+
+    def occupy(self, fraction: float, duration_s: float = 1.0,
+               seed: int = 1234) -> dict:
+        """Run the busy kernel on ~fraction*n_sms SMs for ~duration_s.
+
+        Tunes loop iterations on-the-fly: launches sized so total wall time
+        is close to ``duration_s`` regardless of fraction.
+        """
+        torch = self.torch
+        target_blocks = self.fraction_to_blocks(fraction)
+        if target_blocks == 0:
+            return {"target_fraction": fraction, "target_blocks": 0,
+                    "n_sms": self.n_sms, "kernel_ms": 0.0}
+
+        # When blocks ≤ n_sms, all run in parallel → one "shift" of n_iters.
+        # When blocks > n_sms, we have ceil(blocks/n_sms) shifts per launch,
+        # so per-launch wall time scales by that. Compensate iters down to
+        # keep per-call duration_s.
+        shifts = max(1, (target_blocks + self.n_sms - 1) // self.n_sms)
+        per_call_iters = max(10_000, int(self.n_iters * (duration_s * 1000.0
+                                                         / self._calibrated_ms())
+                                          / shifts))
+        # Single launch already takes ~duration_s.
+        torch.cuda.synchronize()
+        t0 = time.perf_counter()
+        self.ext.launch_busy(self._scratch, target_blocks, THREADS_PER_BLOCK,
+                             per_call_iters, seed, SMEM_BYTES_PER_BLOCK)
+        torch.cuda.synchronize()
+        dt_ms = (time.perf_counter() - t0) * 1000.0
+        return {
+            "target_fraction": fraction,
+            "target_blocks": target_blocks,
+            "actual_fraction": target_blocks / self.n_sms,
+            "n_sms": self.n_sms,
+            "shifts": shifts,
+            "per_call_iters": per_call_iters,
+            "kernel_ms": dt_ms,
+        }
+
+    def _calibrated_ms(self) -> float:
+        # The calibrated iters were chosen so a 1-block run takes ~target_ms.
+        # Cache it: we recompute only on demand.
+        if not hasattr(self, "_cal_ms"):
+            torch = self.torch
+            scratch = torch.empty(THREADS_PER_BLOCK, dtype=torch.float32, device="cuda")
+            torch.cuda.synchronize()
+            t0 = time.perf_counter()
+            self.ext.launch_busy(scratch, 1, THREADS_PER_BLOCK, self.n_iters, 0,
+                                 SMEM_BYTES_PER_BLOCK)
+            torch.cuda.synchronize()
+            self._cal_ms = (time.perf_counter() - t0) * 1000.0
+        return self._cal_ms
+
+    def sweep(self, fractions, duration_s: float = 1.0,
+              with_telemetry: bool = True) -> list[dict]:
+        sampler_cls = None
+        if with_telemetry:
+            try:
+                from nvml_sampler import NvmlSampler
+                sampler_cls = NvmlSampler
+            except Exception as exc:  # pragma: no cover
+                print(f"[occ] NVML unavailable: {exc}", file=sys.stderr)
+
+        idle = self._idle_baseline(sampler_cls) if sampler_cls else {}
+        idle_pw = idle.get("idle_power_w_mean", 0.0) or 0.0
+
+        rows = []
+        for f in fractions:
+            row = self._measured_run(f, duration_s, sampler_cls, idle_pw)
+            rows.append(row)
+        rows[0].setdefault("idle", idle)  # attach baseline to first row
+        return rows
+
+    def _idle_baseline(self, sampler_cls, seconds: float = 0.6) -> dict:
+        sampler = sampler_cls(gpu_index=0, interval_ms=5)
+        sampler.start(); time.sleep(seconds); sampler.stop()
+        s = sampler.summary()
+        return {
+            "idle_power_w_mean": s.get("power_w_mean", -1.0),
+            "idle_clock_mhz_median": s.get("clock_mhz_median", -1.0),
+            "idle_sample_count": s.get("sample_count", 0),
+        }
+
+    def _measured_run(self, fraction, duration_s, sampler_cls, idle_pw) -> dict:
+        sampler = sampler_cls(gpu_index=0, interval_ms=5) if sampler_cls else None
+        if sampler:
+            sampler.start()
+            time.sleep(0.05)
+
+        info = self.occupy(fraction, duration_s)
+
+        if sampler:
+            time.sleep(0.05)
+            sampler.stop()
+            powers = [s.power_w for s in sampler.samples if s.power_w >= 0]
+            max_pw = max(powers) if powers else 0.0
+            thresh = max(idle_pw + 5.0, 0.6 * max_pw)
+            active = [s for s in sampler.samples if s.power_w >= thresh]
+            active_pw = [s.power_w for s in active]
+            mean_pw = (sum(active_pw) / len(active_pw)) if active_pw else -1.0
+            info["power_w_mean_active"] = mean_pw
+            info["power_w_max"] = max_pw
+            info["power_w_above_idle"] = (mean_pw - idle_pw) if mean_pw > 0 else -1.0
+            info["telemetry"] = sampler.summary()
+        return info
+
+
+def main(argv=None) -> int:
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--out", required=True)
+    p.add_argument("--md-out", default=None)
+    p.add_argument("--percentages",
+                   default="1,5,10,25,40,50,60,75,90,100,150,200",
+                   help="Comma list of % of GPU SMs to occupy. >100 queues.")
+    p.add_argument("--target-ms", type=float, default=1000.0,
+                   help="Single-SM kernel duration target (calibration).")
+    p.add_argument("--duration-s", type=float, default=1.0,
+                   help="Per-fraction run duration (seconds).")
+    args = p.parse_args(argv)
+
+    fractions = [float(x) / 100.0 for x in args.percentages.split(",") if x.strip()]
+    print(f"[occ] target percentages: {[f * 100 for f in fractions]}")
+
+    ctrl = OccupancyController(target_kernel_ms=args.target_ms,
+                               verbose_compile=False)
+    print(f"[occ] device: {ctrl.device_name} (sm={ctrl.compute_capability}, "
+          f"n_sms={ctrl.n_sms}, smem/sm={ctrl.total_smem_per_sm} B)")
+    print(f"[occ] calibrated n_iters={ctrl.n_iters} for ~{args.target_ms:.0f} ms / SM")
+
+    rows = ctrl.sweep(fractions, duration_s=args.duration_s, with_telemetry=True)
+
+    # Reference: where N is realistic (≤ n_sms), compute Δpower/SM and a
+    # linear fit. For N > n_sms, power should plateau near the full-GPU value.
+    out = {
+        "sm_occupancy_sweep_version": "v2",
+        "generated_at": utc_now_iso(),
+        "device_name": ctrl.device_name,
+        "compute_capability": ctrl.compute_capability,
+        "n_sms": ctrl.n_sms,
+        "shared_memory_per_multiprocessor": ctrl.total_smem_per_sm,
+        "torch_version": ctrl.torch.__version__,
+        "smem_bytes_per_block": SMEM_BYTES_PER_BLOCK,
+        "threads_per_block": THREADS_PER_BLOCK,
+        "n_iters_calibrated": ctrl.n_iters,
+        "duration_s_per_run": args.duration_s,
+        "idle_baseline": rows[0].get("idle", {}),
+        "rows": rows,
+    }
+    Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.out).write_text(canonical_json_text(out), encoding="utf-8")
+    print(f"[occ] wrote {args.out}")
+
+    # Pretty console table.
+    print()
+    print(f"  {'target%':>8} {'blocks':>7} {'kernel_ms':>10} "
+          f"{'Δpower_W':>10} {'pwr_pred':>9} {'sm_max':>7} {'clock':>7}")
+    # Linear fit over N ≤ n_sms.
+    pts = [(r["target_blocks"], r.get("power_w_above_idle", -1))
+           for r in rows
+           if r.get("power_w_above_idle", -1) > 0 and r["target_blocks"] <= ctrl.n_sms]
+    slope = intercept = float("nan")
+    if len(pts) >= 2:
+        n = len(pts)
+        sx = sum(p[0] for p in pts); sy = sum(p[1] for p in pts)
+        sxx = sum(p[0]*p[0] for p in pts); sxy = sum(p[0]*p[1] for p in pts)
+        denom = n * sxx - sx * sx
+        if denom != 0:
+            slope = (n * sxy - sx * sy) / denom
+            intercept = (sy - slope * sx) / n
+    for r in rows:
+        N = r["target_blocks"]
+        eff_N = min(N, ctrl.n_sms)
+        pwr_pred = (slope * eff_N + intercept) if not (slope != slope) else float("nan")
+        t = r.get("telemetry", {}) or {}
+        print(f"  {r['target_fraction']*100:7.1f}% "
+              f"{N:7d} {r['kernel_ms']:10.1f} "
+              f"{r.get('power_w_above_idle', -1):10.1f} "
+              f"{pwr_pred:9.1f} "
+              f"{t.get('sm_util_max', -1):6.0f}% "
+              f"{t.get('clock_mhz_median', -1):6.0f}")
+
+    if args.md_out:
+        idle = rows[0].get("idle", {})
+        idle_pw = idle.get("idle_power_w_mean", 0.0) or 0.0
+        lines = [
+            "# SM occupancy sweep — controllable fraction of GPU cores",
+            "",
+            f"Hardware: **{ctrl.device_name}** (sm={ctrl.compute_capability}, "
+            f"{ctrl.n_sms} SMs)  ",
+            f"Threads per block: 1024.  ",
+            f"Dynamic shared memory per block: {SMEM_BYTES_PER_BLOCK // 1024} KB "
+            f"(forces 1 block per SM on A100/H100).  ",
+            f"FMA iterations per block: **{ctrl.n_iters}** (calibrated to "
+            f"~{args.target_ms:.0f} ms on a single SM).  ",
+            f"Idle power baseline: **{idle_pw:.1f} W**.  ",
+            "",
+            "## Result table",
+            "",
+            "| target % | target blocks | actual % | kernel_ms | "
+            "power_W (active) | Δpower_W | Δpower / target_block | "
+            "sm_util_max | clock MHz |",
+            "|---|---|---|---|---|---|---|---|---|",
+        ]
+        for r in rows:
+            t = r.get("telemetry", {}) or {}
+            tb = r["target_blocks"]
+            d_per = ((r.get("power_w_above_idle", -1) / tb) if tb and r.get("power_w_above_idle", -1) > 0 else float("nan"))
+            lines.append(
+                f"| {r['target_fraction']*100:.1f} | {tb} | "
+                f"{r.get('actual_fraction', 0)*100:.1f} | "
+                f"{r['kernel_ms']:.1f} | "
+                f"{r.get('power_w_mean_active', -1):.1f} | "
+                f"{r.get('power_w_above_idle', -1):.1f} | "
+                f"{d_per:.2f} | "
+                f"{t.get('sm_util_max', -1):.0f}% | "
+                f"{t.get('clock_mhz_median', -1):.0f} |"
+            )
+        lines += [
+            "",
+            "## Linear fit Δpower = a·N + b (over N ≤ n_sms)",
+            "",
+            f"- slope **a = {slope:.2f} W/SM**",
+            f"- intercept b = {intercept:.2f} W",
+            f"- predicted Δpower at N={ctrl.n_sms}: "
+            f"{slope*ctrl.n_sms + intercept:.1f} W ⇒ total {idle_pw + slope*ctrl.n_sms + intercept:.0f} W",
+            "",
+            "## Reading",
+            "",
+            "- The 96 KB shared-memory pin forces hardware to schedule **at most "
+            "one block per SM**, so `grid_size = N` ⇒ exactly N SMs run in "
+            "parallel for the kernel's duration.",
+            "- For target % ≤ 100, kernel wall time is roughly constant (all "
+            "blocks run in parallel). Δpower scales linearly with N — the slope "
+            "is the per-SM compute power increment.",
+            "- For target % > 100, the hardware queues blocks; "
+            "kernel_ms scales by ⌈N / n_sms⌉ and Δpower stays at full-GPU.",
+            "- The 'actual %' column reflects integer rounding "
+            "(`round(fraction * n_sms)`); below 1% on a 108-SM A100 the floor "
+            "is 1 SM ≈ 0.93%.",
+            "",
+            "## API",
+            "",
+            "```python",
+            "from sm_occupancy_sweep import OccupancyController",
+            "ctrl = OccupancyController()",
+            "ctrl.occupy(fraction=0.50, duration_s=1.0)  # 50% of SMs for 1 s",
+            "ctrl.sweep([0.01, 0.10, 0.50, 1.00], duration_s=1.0)",
+            "```",
+            "",
+        ]
+        Path(args.md_out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.md_out).write_text("\n".join(lines), encoding="utf-8")
+        print(f"[occ] wrote {args.md_out}")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

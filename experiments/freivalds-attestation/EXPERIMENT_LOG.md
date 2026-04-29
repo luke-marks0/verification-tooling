@@ -71,3 +71,60 @@ Append-only. Newest entries at the bottom.
 - Cross-GPU honest TF/s bands at bf16 don't overlap: H100-class 720–820, A100 265–275, L40S 195–250, RTX 4090 159–169, A10 70–80. v2 timing gate can use these to detect "delegated to a faster/slower GPU than claimed".
 - One persistent caveat across all six GPUs: `torch._int_mm` reads 5–25% of vendor int8 peak. SM saturation still reaches 100% at dim ≥ 8192 so attestation works, but reporting against the IMMA peak is misleading. v2 will call `cublasLtMatmul` directly.
 - Cost: H200 + L40S + RTX 4090 ran for ~10 min combined, ≈ \$0.50 total. All vast instances destroyed.
+
+## 2026-04-29 — SM occupancy: arbitrary fraction of cores, A100 SXM4
+
+- Goal (from the user): "pick a single GPU type and show that we can occupy
+  an arbitrary % of cores for that GPU type … to as good a precision as
+  possible." Picked A100 SXM4 (108 SMs, sm_80) on Lambda, $1.99/hr us-east-1.
+- New script: `experiments/freivalds-attestation/scripts/sm_occupancy_sweep.py`.
+  JIT-compiles a custom CUDA kernel via `torch.utils.cpp_extension.load_inline`
+  and exposes a small public API:
+  ```python
+  ctrl = OccupancyController()       # detects n_sms, calibrates per-SM duration
+  ctrl.occupy(fraction=0.50, duration_s=1.0)   # 50 % of SMs for ~1 s
+  ctrl.sweep([0.01, 0.10, 0.50, 1.00, 1.50])
+  ```
+- Mechanism: 1024 threads/block × 96 KB dynamic shared memory per block.
+  A100 has 164 KB SMEM/SM, so 2 × 96 = 192 KB > 164 KB ⇒ hardware can never
+  co-resident two blocks on one SM. `grid_size = N` ⇒ exactly N SMs busy.
+  Three bugs hit before it worked (see below); all in the kernel side.
+- Results (`data/sm_occupancy/sweep_a100.json`, `reports/sm_occupancy_a100.md`)
+  on 108-SM A100, single-SM kernel calibrated to 686 ms:
+  | target % | blocks | kernel_ms | Δpower | predicted | residual |
+  |---|---|---|---|---|---|
+  | 1   | 1   | 1000 | 6.4 W  | 6.2 W  | +0.2 |
+  | 25  | 27  | 1006 | 25.2 W | 24.4 W | +0.8 |
+  | 50  | 54  | 1008 | 41.6 W | 43.3 W | −1.7 |
+  | 75  | 81  | 1003 | 61.7 W | 62.2 W | −0.5 |
+  | 100 | 108 | 1004 | 82.2 W | 81.1 W | +1.1 |
+  Δpower = (0.70 W/SM)·N + 5.5 W. RMS residual 0.9 W ⇒ inversion
+  precision of **±1.3 SMs out of 108 (~1.2% of the GPU)**. Verifier
+  can target any fraction in [1%, 100%] and confirm it from NVML power
+  alone with ~1% absolute precision.
+- Queued regime (N > 108) confirmed: at 150% the script halves per-block
+  iters so wall stays ≈ 1 s. Time-averaged active SMs become
+  (108+54)/2 = 81, predicting Δpower ≈ 62 W; observed 66 W. At 200% the
+  average is 108, predicting 81 W; observed 80 W. ✓
+- Three bugs and fixes during development:
+  - **load_inline missing forward decl.** load_inline auto-generates a
+    pybind module that calls `launch_busy`, but with `cpp_sources=""` the
+    function isn't declared in main.cpp, only in cuda.cu. Added a
+    forward declaration string `CPP_DECL` to `cpp_sources`.
+  - **Compiler elided the FMA loop.** First kernel had a sentinel
+    branch `if (smem[tid] == -1.0e30f) scratch[...] = x`, which `-O3
+    --use_fast_math` folded away. Result: kernel returned in ~0 ms,
+    power read idle. Fix: cooperatively populate 96 KB of smem,
+    cross-thread shuffle through smem, **unconditional** scratch write.
+    Also dropped `--use_fast_math` for safety.
+  - **Calibration runaway.** When the elided kernel returned in
+    sub-microseconds, `if dt < 0.5: n_iters *= 16` ran 5+ times,
+    pushing iters to 300 billion. Capped iters at 200M and added a
+    refinement pass that scales by `target_ms / observed_ms`.
+- Lambda env: torch 2.7.0 / CUDA 12.8 / driver 570.148. Needed `pip
+  install --user ninja pybind11` and `CPLUS_INCLUDE_PATH` pointing at
+  pybind11's headers; nothing else.
+- Cost: ~25 min on A100 SXM4 = ~\$0.85. Instance terminated.
+- This is the v2 building block: the verifier can schedule a chosen mix
+  of matmul + busy-kernel + idle to land the prover at any target
+  power/compute level, then check telemetry against the predicted curve.
