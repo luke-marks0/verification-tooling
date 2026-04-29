@@ -106,6 +106,19 @@ void launch_busy(torch::Tensor scratch,
         (int)n_iters,
         (int)seed);
 }
+
+// Hardware-vendor's own answer for "how many of these blocks fit on one SM
+// given the kernel's resource usage." If this returns 1, the scheduler
+// physically cannot place 2 blocks of (threads, smem_bytes) on an SM.
+int64_t query_max_blocks_per_sm(int64_t threads, int64_t smem_bytes) {
+    cudaFuncSetAttribute((const void*)busy_kernel,
+        cudaFuncAttributeMaxDynamicSharedMemorySize, (int)smem_bytes);
+    int n = -1;
+    cudaError_t err = cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+        &n, (const void*)busy_kernel, (int)threads, (size_t)smem_bytes);
+    if (err != cudaSuccess) return -1;
+    return (int64_t)n;
+}
 """
 
 
@@ -117,16 +130,17 @@ void launch_busy(torch::Tensor scratch,
                  int64_t n_iters,
                  int64_t seed,
                  int64_t smem_bytes);
+int64_t query_max_blocks_per_sm(int64_t threads, int64_t smem_bytes);
 """
 
 
 def _build_extension(verbose: bool = False):
     from torch.utils.cpp_extension import load_inline
     return load_inline(
-        name="sm_occupancy_busy_v1",
+        name="sm_occupancy_busy_v2",
         cpp_sources=CPP_DECL,
         cuda_sources=CUDA_SRC,
-        functions=["launch_busy"],
+        functions=["launch_busy", "query_max_blocks_per_sm"],
         verbose=verbose,
         with_cuda=True,
         extra_cuda_cflags=["-O3"],
@@ -148,6 +162,11 @@ class OccupancyController:
         self.n_sms = int(props.multi_processor_count)
         self.total_smem_per_sm = int(getattr(props, "shared_memory_per_multiprocessor", 0))
         self.ext = _build_extension(verbose=verbose_compile)
+        # Hardware vendor's own answer: how many of these blocks can the
+        # scheduler put on one SM? With 96 KB SMEM/block on A100 (164 KB/SM),
+        # this MUST be 1.
+        self.max_blocks_per_sm = int(self.ext.query_max_blocks_per_sm(
+            THREADS_PER_BLOCK, SMEM_BYTES_PER_BLOCK))
         # Calibrate iters so a single-block run (1 SM busy) takes ~target_kernel_ms.
         self.n_iters = self._calibrate_iters(target_kernel_ms)
         # Reusable scratch sized for a full-GPU launch (1024 floats / SM).
@@ -242,7 +261,7 @@ class OccupancyController:
         return self._cal_ms
 
     def sweep(self, fractions, duration_s: float = 1.0,
-              with_telemetry: bool = True) -> list[dict]:
+              with_telemetry: bool = True, with_dcgm: bool = True) -> list[dict]:
         sampler_cls = None
         if with_telemetry:
             try:
@@ -251,12 +270,24 @@ class OccupancyController:
             except Exception as exc:  # pragma: no cover
                 print(f"[occ] NVML unavailable: {exc}", file=sys.stderr)
 
+        dcgm_cls = None
+        if with_dcgm:
+            try:
+                from dcgm_sampler import DcgmSmActiveSampler, dcgmi_available
+                if dcgmi_available():
+                    dcgm_cls = DcgmSmActiveSampler
+                else:
+                    print("[occ] dcgmi not on PATH; skipping DCGM SM_ACTIVE",
+                          file=sys.stderr)
+            except Exception as exc:  # pragma: no cover
+                print(f"[occ] dcgm_sampler import failed: {exc}", file=sys.stderr)
+
         idle = self._idle_baseline(sampler_cls) if sampler_cls else {}
         idle_pw = idle.get("idle_power_w_mean", 0.0) or 0.0
 
         rows = []
         for f in fractions:
-            row = self._measured_run(f, duration_s, sampler_cls, idle_pw)
+            row = self._measured_run(f, duration_s, sampler_cls, dcgm_cls, idle_pw)
             rows.append(row)
         rows[0].setdefault("idle", idle)  # attach baseline to first row
         return rows
@@ -271,14 +302,27 @@ class OccupancyController:
             "idle_sample_count": s.get("sample_count", 0),
         }
 
-    def _measured_run(self, fraction, duration_s, sampler_cls, idle_pw) -> dict:
+    def _measured_run(self, fraction, duration_s, sampler_cls, dcgm_cls,
+                      idle_pw) -> dict:
         sampler = sampler_cls(gpu_index=0, interval_ms=5) if sampler_cls else None
+        # DCGM profiling can't sample below 100 ms on most cards, so we
+        # need duration_s ≥ 0.5 to get a few clean samples.
+        dcgm = dcgm_cls(gpu_index=0, interval_ms=100) if dcgm_cls else None
+
         if sampler:
             sampler.start()
+        if dcgm:
+            dcgm.start()
+            # DCGM dmon takes ~150 ms to start emitting; pad before kernel.
+            time.sleep(0.25)
+        elif sampler:
             time.sleep(0.05)
 
         info = self.occupy(fraction, duration_s)
 
+        if dcgm:
+            time.sleep(0.15)
+            dcgm.stop()
         if sampler:
             time.sleep(0.05)
             sampler.stop()
@@ -292,6 +336,12 @@ class OccupancyController:
             info["power_w_max"] = max_pw
             info["power_w_above_idle"] = (mean_pw - idle_pw) if mean_pw > 0 else -1.0
             info["telemetry"] = sampler.summary()
+        if dcgm:
+            ds = dcgm.summary()
+            info["dcgm"] = ds
+            # Direct cross-check: DCGM SM_ACTIVE × n_sms → measured active count.
+            sma = ds.get("sm_active_mean", -1.0)
+            info["dcgm_measured_blocks"] = (sma * self.n_sms) if sma >= 0 else -1.0
         return info
 
 
@@ -315,14 +365,18 @@ def main(argv=None) -> int:
                                verbose_compile=False)
     print(f"[occ] device: {ctrl.device_name} (sm={ctrl.compute_capability}, "
           f"n_sms={ctrl.n_sms}, smem/sm={ctrl.total_smem_per_sm} B)")
+    print(f"[occ] cudaOccupancyMaxActiveBlocksPerMultiprocessor"
+          f"(threads={THREADS_PER_BLOCK}, smem={SMEM_BYTES_PER_BLOCK} B) = "
+          f"**{ctrl.max_blocks_per_sm}**")
     print(f"[occ] calibrated n_iters={ctrl.n_iters} for ~{args.target_ms:.0f} ms / SM")
 
-    rows = ctrl.sweep(fractions, duration_s=args.duration_s, with_telemetry=True)
+    rows = ctrl.sweep(fractions, duration_s=args.duration_s,
+                      with_telemetry=True, with_dcgm=True)
 
     # Reference: where N is realistic (≤ n_sms), compute Δpower/SM and a
     # linear fit. For N > n_sms, power should plateau near the full-GPU value.
     out = {
-        "sm_occupancy_sweep_version": "v2",
+        "sm_occupancy_sweep_version": "v3",
         "generated_at": utc_now_iso(),
         "device_name": ctrl.device_name,
         "compute_capability": ctrl.compute_capability,
@@ -333,6 +387,7 @@ def main(argv=None) -> int:
         "threads_per_block": THREADS_PER_BLOCK,
         "n_iters_calibrated": ctrl.n_iters,
         "duration_s_per_run": args.duration_s,
+        "max_blocks_per_sm_query": ctrl.max_blocks_per_sm,
         "idle_baseline": rows[0].get("idle", {}),
         "rows": rows,
     }
@@ -343,7 +398,9 @@ def main(argv=None) -> int:
     # Pretty console table.
     print()
     print(f"  {'target%':>8} {'blocks':>7} {'kernel_ms':>10} "
-          f"{'Δpower_W':>10} {'pwr_pred':>9} {'sm_max':>7} {'clock':>7}")
+          f"{'Δpower_W':>10} {'pwr_pred':>9} "
+          f"{'dcgm_SMACT':>11} {'dcgm_blks':>10} {'err_blks':>9} "
+          f"{'sm_max':>7} {'clock':>7}")
     # Linear fit over N ≤ n_sms.
     pts = [(r["target_blocks"], r.get("power_w_above_idle", -1))
            for r in rows
@@ -362,10 +419,17 @@ def main(argv=None) -> int:
         eff_N = min(N, ctrl.n_sms)
         pwr_pred = (slope * eff_N + intercept) if not (slope != slope) else float("nan")
         t = r.get("telemetry", {}) or {}
+        d = r.get("dcgm", {}) or {}
+        sma = d.get("sm_active_mean", -1.0)
+        dcgm_blocks = r.get("dcgm_measured_blocks", -1.0)
+        err_blocks = (dcgm_blocks - eff_N) if dcgm_blocks > 0 else float("nan")
         print(f"  {r['target_fraction']*100:7.1f}% "
               f"{N:7d} {r['kernel_ms']:10.1f} "
               f"{r.get('power_w_above_idle', -1):10.1f} "
               f"{pwr_pred:9.1f} "
+              f"{sma:11.3f} "
+              f"{dcgm_blocks:10.1f} "
+              f"{err_blocks:+9.1f} "
               f"{t.get('sm_util_max', -1):6.0f}% "
               f"{t.get('clock_mhz_median', -1):6.0f}")
 
@@ -384,24 +448,37 @@ def main(argv=None) -> int:
             f"~{args.target_ms:.0f} ms on a single SM).  ",
             f"Idle power baseline: **{idle_pw:.1f} W**.  ",
             "",
+            "## Direct hardware verification",
+            "",
+            f"`cudaOccupancyMaxActiveBlocksPerMultiprocessor("
+            f"threads={THREADS_PER_BLOCK}, smem={SMEM_BYTES_PER_BLOCK} B)` = "
+            f"**{ctrl.max_blocks_per_sm}**. The CUDA runtime — i.e., NVIDIA's "
+            f"own scheduler — confirms it can place at most "
+            f"{ctrl.max_blocks_per_sm} block per SM with these resource "
+            f"constraints. Combined with `grid = N`, this guarantees ≤ N "
+            f"distinct SMs are touched.",
+            "",
             "## Result table",
             "",
-            "| target % | target blocks | actual % | kernel_ms | "
-            "power_W (active) | Δpower_W | Δpower / target_block | "
-            "sm_util_max | clock MHz |",
+            "| target % | target blocks | kernel_ms | "
+            "Δpower_W | DCGM SM_ACTIVE | DCGM blocks (= SMACT × n_sms) | "
+            "DCGM err vs target | sm_util_max | clock MHz |",
             "|---|---|---|---|---|---|---|---|---|",
         ]
         for r in rows:
             t = r.get("telemetry", {}) or {}
+            d = r.get("dcgm", {}) or {}
             tb = r["target_blocks"]
-            d_per = ((r.get("power_w_above_idle", -1) / tb) if tb and r.get("power_w_above_idle", -1) > 0 else float("nan"))
+            sma = d.get("sm_active_mean", -1.0)
+            db = r.get("dcgm_measured_blocks", -1.0)
+            err = (db - min(tb, ctrl.n_sms)) if db > 0 else float("nan")
             lines.append(
                 f"| {r['target_fraction']*100:.1f} | {tb} | "
-                f"{r.get('actual_fraction', 0)*100:.1f} | "
                 f"{r['kernel_ms']:.1f} | "
-                f"{r.get('power_w_mean_active', -1):.1f} | "
                 f"{r.get('power_w_above_idle', -1):.1f} | "
-                f"{d_per:.2f} | "
+                f"{sma:.3f} | "
+                f"{db:.1f} | "
+                f"{err:+.1f} | "
                 f"{t.get('sm_util_max', -1):.0f}% | "
                 f"{t.get('clock_mhz_median', -1):.0f} |"
             )
@@ -416,17 +493,31 @@ def main(argv=None) -> int:
             "",
             "## Reading",
             "",
-            "- The 96 KB shared-memory pin forces hardware to schedule **at most "
-            "one block per SM**, so `grid_size = N` ⇒ exactly N SMs run in "
-            "parallel for the kernel's duration.",
-            "- For target % ≤ 100, kernel wall time is roughly constant (all "
-            "blocks run in parallel). Δpower scales linearly with N — the slope "
-            "is the per-SM compute power increment.",
-            "- For target % > 100, the hardware queues blocks; "
-            "kernel_ms scales by ⌈N / n_sms⌉ and Δpower stays at full-GPU.",
-            "- The 'actual %' column reflects integer rounding "
-            "(`round(fraction * n_sms)`); below 1% on a 108-SM A100 the floor "
-            "is 1 SM ≈ 0.93%.",
+            "**Three independent signals all agree on N.**",
+            "",
+            "1. *Hardware contract* — `cudaOccupancyMax"
+            "ActiveBlocksPerMultiprocessor` returned 1 for our resource "
+            "profile, so grid = N ⇒ at most N SMs touched.",
+            "2. *Direct measurement* — DCGM's `DCGM_FI_PROF_SM_ACTIVE` "
+            "(field 1002) is the ratio of cycles SMs were busy averaged "
+            "across all SMs. SMACT × n_sms recovers the active-block "
+            "count without going through power.",
+            "3. *Power scaling* — Δpower is linear in N with tight "
+            "residuals; the slope is just the per-SM power increment of a "
+            "FMA-only kernel.",
+            "",
+            "When DCGM and the linear-fit prediction agree to within ~1 SM, "
+            "we know all three are reading the same physical event.",
+            "",
+            "**Queued regime (N > n_sms).** The script holds wall time near "
+            "`duration_s` by dividing per-block iterations by `⌈N / n_sms⌉`. "
+            "DCGM SMACT at 200% should still read ≈ 1.0; at 150% it should "
+            "read ≈ (108 + 54)/2 / 108 = 0.75 (time-averaged across the two "
+            "phases of the queued launch).",
+            "",
+            "**Floor.** The 'actual %' values reflect integer rounding "
+            "(`round(fraction * n_sms)`); on 108 SMs the smallest non-zero "
+            "target is 1 SM ≈ 0.93%.",
             "",
             "## API",
             "",

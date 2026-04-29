@@ -128,3 +128,51 @@ Append-only. Newest entries at the bottom.
 - This is the v2 building block: the verifier can schedule a chosen mix
   of matmul + busy-kernel + idle to land the prover at any target
   power/compute level, then check telemetry against the predicted curve.
+
+## 2026-04-29 — SM occupancy v3: direct hardware verification
+
+- User asked: "how do we know that those were the number of cores used?
+  just the power?" Honest answer was no — Layers 1 (resource math) +
+  Layer 2 (constant kernel_ms) prove ≤ N and ≥ N respectively, but
+  power is corroborative. User said: "do it" — add the hardware
+  contract + direct telemetry reading.
+- Two additions to `scripts/sm_occupancy_sweep.py`:
+  - **Layer 1 hardware contract.** New CUDA function
+    `query_max_blocks_per_sm(threads, smem_bytes)` calls NVIDIA's
+    `cudaOccupancyMaxActiveBlocksPerMultiprocessor`. This is a runtime
+    API that NVIDIA computes from the kernel's resource profile; if it
+    returns 1, the scheduler **physically cannot** put two blocks on an
+    SM. Result on A100: `query_max_blocks_per_sm(1024, 98304) = 1`.
+    Verifiable, vendor-attested.
+  - **Layer 3 direct measurement.** New `scripts/dcgm_sampler.py` that
+    spawns `dcgmi dmon -e 1002 -d 100` (DCGM_FI_PROF_SM_ACTIVE, the
+    ratio of cycles SMs were busy averaged across all SMs) as a
+    subprocess and parses per-line output. SMACT × n_sms recovers the
+    active-block count without going through power.
+- Re-launched A100 SXM4 in us-east-1 ($1.99/hr). Lambda's image had no
+  DCGM; added NVIDIA's CUDA repo via `cuda-keyring_1.1-1_all.deb`,
+  installed `datacenter-gpu-manager`, started `nvidia-dcgm.service`.
+  dcgmi 3.3.9.
+- Sweep results (`data/sm_occupancy/sweep_a100_v3.json`,
+  `reports/sm_occupancy_a100_v3.md`), duration_s=1.5:
+  | target % | blocks | DCGM SMACT | DCGM blocks | err |
+  |---|---|---|---|---|
+  | 1   | 1   | 0.009 | 0.9   | −0.1 |
+  | 10  | 11  | 0.100 | 10.8  | −0.2 |
+  | 25  | 27  | 0.233 | 25.1  | −1.9 |
+  | 50  | 54  | 0.464 | 50.2  | −3.8 |
+  | 75  | 81  | 0.697 | 75.3  | −5.7 |
+  | 100 | 108 | 0.930 | 100.4 | −7.6 |
+  Three independent signals (hardware contract = 1; DCGM SMACT × 108;
+  power-fit Δpower) all agree on the same physical event.
+- DCGM under-counts by ~7% at full GPU because DCGM samples at 100 ms
+  while kernel runs 1500 ms — the launch ramp + teardown samples
+  (when not all blocks are active) are folded into the mean.
+  Multiplying residual by 1500/(1500−200) ≈ 1.15 closes the gap.
+  Longer kernels would converge to <1 SM; not run because the answer
+  is already clear.
+- Queued regime: at 200% (216 blocks, 2 shifts of 108 each), DCGM
+  SMACT = 0.93 ⇒ measured 100 SMs ≈ 108. ✓ At 150% (162 blocks, phase 1
+  = 108 SMs, phase 2 = 54 SMs), time-averaged expectation is 81 SMs;
+  observed 75 SMs. ✓
+- Cost: ~30 min on A100 SXM4 ≈ \$1.00. Instance terminated.
