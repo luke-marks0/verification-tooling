@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from pkg.freivalds.spec import (
     AttestationReport,
+    ChainHashChunk,
     Challenge,
     ComparisonMode,
     MatmulResult,
@@ -25,17 +26,28 @@ from pkg.freivalds.spec import (
     Tolerance,
 )
 from pkg.freivalds.prover import execute_challenge
+from pkg.freivalds.streaming import (
+    GENESIS_CHAIN_HASH,
+    execute_streaming_challenge,
+    fold_chain_hash,
+    verify_streaming_response,
+)
 from pkg.freivalds.verifier import verify_response
 
 __all__ = [
     "AttestationReport",
+    "ChainHashChunk",
     "Challenge",
     "ComparisonMode",
+    "GENESIS_CHAIN_HASH",
     "MatmulResult",
     "MatmulSpec",
     "MatmulVerdict",
     "Response",
     "Tolerance",
     "execute_challenge",
+    "execute_streaming_challenge",
+    "fold_chain_hash",
     "verify_response",
+    "verify_streaming_response",
 ]

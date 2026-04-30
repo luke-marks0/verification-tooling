@@ -125,16 +125,39 @@ class MatmulSpec:
 
 @dataclass(frozen=True)
 class Challenge:
-    """A bundle of matmuls a verifier asks a prover to compute."""
+    """A bundle of matmuls a verifier asks a prover to compute.
+
+    ``matmuls_per_response`` is the streaming-protocol stride ``M`` (Buck's
+    "matmuls per response" parameter from the 2026-04-30 protocol meeting).
+    When ``None`` or equal to ``len(matmuls)``, the prover runs in single-shot
+    mode and returns full ``C`` bytes (Freivalds verifier path). When set to
+    a smaller value, the prover runs in streaming mode and returns one
+    chain-hash per chunk of ``M`` consecutive matmuls — see
+    ``experiments/freivalds-attestation/specs/streaming_strided.md``.
+    """
     challenge_id: str
     matmuls: tuple[MatmulSpec, ...]
+    matmuls_per_response: int | None = None
+
+    def __post_init__(self) -> None:
+        if self.matmuls_per_response is not None:
+            M = int(self.matmuls_per_response)
+            if M < 1:
+                raise ValueError(f"matmuls_per_response must be >= 1, got {M}")
+            if M > len(self.matmuls):
+                raise ValueError(
+                    f"matmuls_per_response={M} > total matmuls={len(self.matmuls)}"
+                )
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        d: dict[str, Any] = {
             "challenge_version": "v1",
             "challenge_id": self.challenge_id,
             "matmuls": [m.to_dict() for m in self.matmuls],
         }
+        if self.matmuls_per_response is not None:
+            d["matmuls_per_response"] = int(self.matmuls_per_response)
+        return d
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Challenge:
@@ -143,9 +166,11 @@ class Challenge:
         ids = [m["id"] for m in d["matmuls"]]
         if len(set(ids)) != len(ids):
             raise ValueError("matmul ids must be unique within a challenge")
+        mpr = d.get("matmuls_per_response")
         return cls(
             challenge_id=str(d["challenge_id"]),
             matmuls=tuple(MatmulSpec.from_dict(m) for m in d["matmuls"]),
+            matmuls_per_response=int(mpr) if mpr is not None else None,
         )
 
 
@@ -203,28 +228,73 @@ class MatmulResult:
 
 
 @dataclass(frozen=True)
-class Response:
-    """Prover's response to a challenge."""
-    challenge_id: str
-    backend: str
-    results: tuple[MatmulResult, ...]
+class ChainHashChunk:
+    """One chunk of the streaming/strided protocol response.
+
+    Per Luke's 2026-04-30 design, the prover hash-chains the ``digest_c``
+    values of ``M`` consecutive matmuls into one chain hash and reports it
+    in lieu of returning full C bytes. The verifier checks the chain bound
+    by re-running the same matmuls (or a subset) against the same seeds.
+    """
+    chunk_index: int
+    matmul_ids: tuple[str, ...]
+    chain_hash: str
+    wall_time_ms: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "chunk_index": int(self.chunk_index),
+            "matmul_ids": list(self.matmul_ids),
+            "chain_hash": self.chain_hash,
+            "wall_time_ms": float(self.wall_time_ms),
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> ChainHashChunk:
+        return cls(
+            chunk_index=int(d["chunk_index"]),
+            matmul_ids=tuple(str(x) for x in d["matmul_ids"]),
+            chain_hash=str(d["chain_hash"]),
+            wall_time_ms=float(d.get("wall_time_ms", 0.0)),
+        )
+
+
+@dataclass(frozen=True)
+class Response:
+    """Prover's response to a challenge.
+
+    ``results`` carries full per-matmul results (single-shot mode);
+    ``chain_hashes`` carries one chunk-hash per stride-M chunk (streaming
+    mode, see :class:`ChainHashChunk`). Exactly one of them is populated
+    in normal use, but both are wire-compatible with v1 verifiers (which
+    will simply ignore the empty tuple).
+    """
+    challenge_id: str
+    backend: str
+    results: tuple[MatmulResult, ...]
+    chain_hashes: tuple[ChainHashChunk, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        d: dict[str, Any] = {
             "response_version": "v1",
             "challenge_id": self.challenge_id,
             "backend": self.backend,
             "results": [r.to_dict() for r in self.results],
         }
+        if self.chain_hashes:
+            d["chain_hashes"] = [c.to_dict() for c in self.chain_hashes]
+        return d
 
     @classmethod
     def from_dict(cls, d: dict[str, Any]) -> Response:
         if d.get("response_version") != "v1":
             raise ValueError(f"unsupported response_version: {d.get('response_version')!r}")
+        chain_raw = d.get("chain_hashes") or []
         return cls(
             challenge_id=str(d["challenge_id"]),
             backend=str(d["backend"]),
             results=tuple(MatmulResult.from_dict(r) for r in d["results"]),
+            chain_hashes=tuple(ChainHashChunk.from_dict(c) for c in chain_raw),
         )
 
 

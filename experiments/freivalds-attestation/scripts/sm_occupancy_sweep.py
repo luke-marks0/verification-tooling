@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 import time
 from pathlib import Path
@@ -208,6 +209,88 @@ class OccupancyController:
             return 0
         return max(1, round(fraction * self.n_sms))
 
+    @staticmethod
+    def matmul_flops(n: int, k: int = 1) -> int:
+        """Total FLOPs for ``k`` matmuls of size ``n × n × n``.
+
+        One matmul is 2·n³ FLOPs (one multiply + one add per inner-product term).
+        This is the static-analysis identity Buck mentioned in the protocol meeting:
+        the verifier specifies a FLOPs budget; the controller derives (n, k, N_sm)
+        from it via this function.
+        """
+        return 2 * k * n * n * n
+
+    def flops_per_block(self, n_iters: int) -> int:
+        """FLOPs the busy kernel does in one block.
+
+        Each block has 1024 threads; each thread runs ``n_iters`` FMAs;
+        each FMA = 2 FP32 ops.
+        """
+        return 2 * THREADS_PER_BLOCK * n_iters
+
+    def calibrated_flops_per_sm_per_sec(self) -> float:
+        """Measured FP32 throughput of the busy kernel on a single SM.
+
+        Used to convert a verifier-supplied FLOPs budget into (N_sm, iters).
+        Determined by calibration; lower than the GPU's peak FP32 because
+        FMAs are dependent (no ILP across the loop) and we don't fight to
+        keep the FMA + tensor pipes co-active. Honest for FP32-only workloads.
+        """
+        cal_ms = self._calibrated_ms()
+        return self.flops_per_block(self.n_iters) / (cal_ms / 1000.0)
+
+    def occupy_flops(self, flops: float, duration_s: float = 1.0,
+                     seed: int = 1234) -> dict:
+        """Burn approximately ``flops`` FP32 operations over ``duration_s``.
+
+        This is the FLOPs-native interface Buck and Luke asked for. The verifier
+        passes a number of FLOPs (e.g., from `2·n³·k`); the controller picks
+        the smallest N_sm that can finish in ``duration_s`` and sizes
+        per-block iterations to consume the budget.
+
+        Returns a dict with target/actual FLOPs, kernel_ms, and the chosen
+        (N_sm, iters_per_block) — the SM count is now an internal scheduling
+        decision, not part of the protocol surface.
+        """
+        if flops <= 0:
+            return {"target_flops": 0.0, "actual_flops": 0.0, "n_sms_used": 0,
+                    "iters_per_block": 0, "kernel_ms": 0.0,
+                    "per_sm_flops_per_sec": self.calibrated_flops_per_sm_per_sec()}
+        per_sm_rate = self.calibrated_flops_per_sm_per_sec()
+        # Smallest N that meets the deadline; if oversaturated, use full GPU
+        # and let wall time stretch.
+        required_sms = max(1, math.ceil(flops / (duration_s * per_sm_rate)))
+        N = min(required_sms, self.n_sms)
+        # Per-block iters for the share of FLOPs each SM should burn.
+        flops_per_block = flops / N
+        iters = max(1_000, int(flops_per_block / (2 * THREADS_PER_BLOCK)))
+        # If verifier asked for more than the GPU can do in duration_s,
+        # iters can balloon; cap at the calibrated single-SM iters scaled
+        # by ⌈required/N⌉ so wall time is bounded but we still issue the
+        # requested work.
+        scale = max(1, math.ceil(required_sms / N))
+        iters_cap = max(self.n_iters, self.n_iters * scale * 2)
+        iters = min(iters, iters_cap)
+
+        torch = self.torch
+        torch.cuda.synchronize()
+        t0 = time.perf_counter()
+        self.ext.launch_busy(self._scratch, N, THREADS_PER_BLOCK, iters, seed,
+                             SMEM_BYTES_PER_BLOCK)
+        torch.cuda.synchronize()
+        dt_ms = (time.perf_counter() - t0) * 1000.0
+        actual_flops = self.flops_per_block(iters) * N
+        return {
+            "target_flops": float(flops),
+            "actual_flops": float(actual_flops),
+            "target_duration_s": duration_s,
+            "kernel_ms": dt_ms,
+            "n_sms_used": N,
+            "iters_per_block": iters,
+            "per_sm_flops_per_sec": per_sm_rate,
+            "oversaturated": required_sms > self.n_sms,
+        }
+
     def occupy(self, fraction: float, duration_s: float = 1.0,
                seed: int = 1234) -> dict:
         """Run the busy kernel on ~fraction*n_sms SMs for ~duration_s.
@@ -271,11 +354,17 @@ class OccupancyController:
                 print(f"[occ] NVML unavailable: {exc}", file=sys.stderr)
 
         dcgm_cls = None
+        dcgm_multi_cls = None
         if with_dcgm:
             try:
-                from dcgm_sampler import DcgmSmActiveSampler, dcgmi_available
+                from dcgm_sampler import (
+                    DcgmSmActiveSampler,
+                    DcgmMultiFieldSampler,
+                    dcgmi_available,
+                )
                 if dcgmi_available():
                     dcgm_cls = DcgmSmActiveSampler
+                    dcgm_multi_cls = DcgmMultiFieldSampler
                 else:
                     print("[occ] dcgmi not on PATH; skipping DCGM SM_ACTIVE",
                           file=sys.stderr)
@@ -287,7 +376,8 @@ class OccupancyController:
 
         rows = []
         for f in fractions:
-            row = self._measured_run(f, duration_s, sampler_cls, dcgm_cls, idle_pw)
+            row = self._measured_run(f, duration_s, sampler_cls, dcgm_cls,
+                                     dcgm_multi_cls, idle_pw)
             rows.append(row)
         rows[0].setdefault("idle", idle)  # attach baseline to first row
         return rows
@@ -303,16 +393,21 @@ class OccupancyController:
         }
 
     def _measured_run(self, fraction, duration_s, sampler_cls, dcgm_cls,
-                      idle_pw) -> dict:
+                      dcgm_multi_cls, idle_pw) -> dict:
         sampler = sampler_cls(gpu_index=0, interval_ms=5) if sampler_cls else None
         # DCGM profiling can't sample below 100 ms on most cards, so we
         # need duration_s ≥ 0.5 to get a few clean samples.
         dcgm = dcgm_cls(gpu_index=0, interval_ms=100) if dcgm_cls else None
+        dcgm_multi = (dcgm_multi_cls(gpu_index=0, interval_ms=100)
+                      if dcgm_multi_cls else None)
 
         if sampler:
             sampler.start()
         if dcgm:
             dcgm.start()
+        if dcgm_multi:
+            dcgm_multi.start()
+        if dcgm or dcgm_multi:
             # DCGM dmon takes ~150 ms to start emitting; pad before kernel.
             time.sleep(0.25)
         elif sampler:
@@ -323,6 +418,10 @@ class OccupancyController:
         if dcgm:
             time.sleep(0.15)
             dcgm.stop()
+        if dcgm_multi:
+            if not dcgm:
+                time.sleep(0.15)
+            dcgm_multi.stop()
         if sampler:
             time.sleep(0.05)
             sampler.stop()
@@ -342,6 +441,19 @@ class OccupancyController:
             # Direct cross-check: DCGM SM_ACTIVE × n_sms → measured active count.
             sma = ds.get("sm_active_mean", -1.0)
             info["dcgm_measured_blocks"] = (sma * self.n_sms) if sma >= 0 else -1.0
+        if dcgm_multi:
+            mds = dcgm_multi.summary()
+            info["dcgm_multi"] = mds
+            # Convenience surface fields for the per-SM-internal-saturation
+            # check Buck asked for: divide the GPU-averaged pipe-active by
+            # the fraction of SMs busy, so we get the *per-busy-SM* pipe rate.
+            sma = mds.get("sm_active", {}).get("mean_active", 0.0)
+            for f in ("sm_occupancy", "fp32_active", "tensor_active"):
+                v = mds.get(f, {}).get("mean_active", -1.0)
+                if v >= 0 and sma > 0:
+                    info[f"{f}_per_busy_sm"] = v / sma
+                else:
+                    info[f"{f}_per_busy_sm"] = -1.0
         return info
 
 
@@ -352,6 +464,10 @@ def main(argv=None) -> int:
     p.add_argument("--percentages",
                    default="1,5,10,25,40,50,60,75,90,100,150,200",
                    help="Comma list of % of GPU SMs to occupy. >100 queues.")
+    p.add_argument("--flops",
+                   default=None,
+                   help="Comma list of FLOPs targets. If set, runs the FLOPs "
+                        "interface (occupy_flops) instead of the % sweep.")
     p.add_argument("--target-ms", type=float, default=1000.0,
                    help="Single-SM kernel duration target (calibration).")
     p.add_argument("--duration-s", type=float, default=1.0,
@@ -369,6 +485,36 @@ def main(argv=None) -> int:
           f"(threads={THREADS_PER_BLOCK}, smem={SMEM_BYTES_PER_BLOCK} B) = "
           f"**{ctrl.max_blocks_per_sm}**")
     print(f"[occ] calibrated n_iters={ctrl.n_iters} for ~{args.target_ms:.0f} ms / SM")
+
+    if args.flops:
+        flops_targets = [float(x) for x in args.flops.split(",") if x.strip()]
+        per_sm_rate = ctrl.calibrated_flops_per_sm_per_sec()
+        print(f"[occ] per-SM FLOPs/s (busy kernel, FP32-FMA-only): {per_sm_rate:.3e}")
+        print(f"[occ] FLOPs interface: targets {flops_targets}")
+        flop_rows = []
+        for f in flops_targets:
+            r = ctrl.occupy_flops(f, duration_s=args.duration_s)
+            print(f"  flops={f:.3e} → N_sm={r['n_sms_used']} "
+                  f"iters={r['iters_per_block']} actual={r['actual_flops']:.3e} "
+                  f"dt={r['kernel_ms']:.0f} ms "
+                  f"oversaturated={r['oversaturated']}")
+            flop_rows.append(r)
+        out = {
+            "sm_occupancy_sweep_version": "v3-flops",
+            "generated_at": utc_now_iso(),
+            "device_name": ctrl.device_name,
+            "compute_capability": ctrl.compute_capability,
+            "n_sms": ctrl.n_sms,
+            "torch_version": ctrl.torch.__version__,
+            "n_iters_calibrated": ctrl.n_iters,
+            "per_sm_flops_per_sec": per_sm_rate,
+            "duration_s_per_run": args.duration_s,
+            "flop_rows": flop_rows,
+        }
+        Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.out).write_text(canonical_json_text(out), encoding="utf-8")
+        print(f"[occ] wrote {args.out}")
+        return 0
 
     rows = ctrl.sweep(fractions, duration_s=args.duration_s,
                       with_telemetry=True, with_dcgm=True)
@@ -400,6 +546,7 @@ def main(argv=None) -> int:
     print(f"  {'target%':>8} {'blocks':>7} {'kernel_ms':>10} "
           f"{'Δpower_W':>10} {'pwr_pred':>9} "
           f"{'dcgm_SMACT':>11} {'dcgm_blks':>10} {'err_blks':>9} "
+          f"{'fp32/sm':>8} {'tensor/sm':>10} {'occ/sm':>8} "
           f"{'sm_max':>7} {'clock':>7}")
     # Linear fit over N ≤ n_sms.
     pts = [(r["target_blocks"], r.get("power_w_above_idle", -1))
@@ -423,6 +570,9 @@ def main(argv=None) -> int:
         sma = d.get("sm_active_mean", -1.0)
         dcgm_blocks = r.get("dcgm_measured_blocks", -1.0)
         err_blocks = (dcgm_blocks - eff_N) if dcgm_blocks > 0 else float("nan")
+        fp32_per_sm = r.get("fp32_active_per_busy_sm", -1.0)
+        tensor_per_sm = r.get("tensor_active_per_busy_sm", -1.0)
+        occ_per_sm = r.get("sm_occupancy_per_busy_sm", -1.0)
         print(f"  {r['target_fraction']*100:7.1f}% "
               f"{N:7d} {r['kernel_ms']:10.1f} "
               f"{r.get('power_w_above_idle', -1):10.1f} "
@@ -430,6 +580,9 @@ def main(argv=None) -> int:
               f"{sma:11.3f} "
               f"{dcgm_blocks:10.1f} "
               f"{err_blocks:+9.1f} "
+              f"{fp32_per_sm:8.3f} "
+              f"{tensor_per_sm:10.3f} "
+              f"{occ_per_sm:8.3f} "
               f"{t.get('sm_util_max', -1):6.0f}% "
               f"{t.get('clock_mhz_median', -1):6.0f}")
 
@@ -462,8 +615,10 @@ def main(argv=None) -> int:
             "",
             "| target % | target blocks | kernel_ms | "
             "Δpower_W | DCGM SM_ACTIVE | DCGM blocks (= SMACT × n_sms) | "
-            "DCGM err vs target | sm_util_max | clock MHz |",
-            "|---|---|---|---|---|---|---|---|---|",
+            "DCGM err vs target | "
+            "FP32/busy_SM | TENSOR/busy_SM | SM_OCC/busy_SM | "
+            "sm_util_max | clock MHz |",
+            "|---|---|---|---|---|---|---|---|---|---|---|---|",
         ]
         for r in rows:
             t = r.get("telemetry", {}) or {}
@@ -472,6 +627,9 @@ def main(argv=None) -> int:
             sma = d.get("sm_active_mean", -1.0)
             db = r.get("dcgm_measured_blocks", -1.0)
             err = (db - min(tb, ctrl.n_sms)) if db > 0 else float("nan")
+            fp32_per_sm = r.get("fp32_active_per_busy_sm", -1.0)
+            tensor_per_sm = r.get("tensor_active_per_busy_sm", -1.0)
+            occ_per_sm = r.get("sm_occupancy_per_busy_sm", -1.0)
             lines.append(
                 f"| {r['target_fraction']*100:.1f} | {tb} | "
                 f"{r['kernel_ms']:.1f} | "
@@ -479,6 +637,9 @@ def main(argv=None) -> int:
                 f"{sma:.3f} | "
                 f"{db:.1f} | "
                 f"{err:+.1f} | "
+                f"{fp32_per_sm:.3f} | "
+                f"{tensor_per_sm:.3f} | "
+                f"{occ_per_sm:.3f} | "
                 f"{t.get('sm_util_max', -1):.0f}% | "
                 f"{t.get('clock_mhz_median', -1):.0f} |"
             )

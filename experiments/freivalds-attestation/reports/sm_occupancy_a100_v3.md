@@ -6,6 +6,19 @@ Dynamic shared memory per block: 96 KB (forces 1 block per SM on A100/H100).
 FMA iterations per block: **77809062** (calibrated to ~1500 ms on a single SM).  
 Idle power baseline: **70.2 W**.  
 
+## Workload schedule
+
+Each `OccupancyController.occupy(fraction)` call issues **exactly one kernel launch** with `grid = N` blocks where `N = round(fraction · n_sms)`. The schedule is rigid and well-defined:
+
+- **One block per SM.** Each block requests 96 KB of dynamic shared memory; A100 has 164 KB SMEM/SM, so two blocks (192 KB) cannot coexist on one SM. The scheduler places blocks 1-to-1 with SMs.
+- **Each block runs `n_iters` independent FMAs in a single thread of execution per warp.** No matmul work is shared across SMs. A "matmul" in the future-proof FLOPs interface (see §FLOPs interface) is sized to fit inside one block — so **one matmul ≡ one block ≡ one SM** for the lifetime of the launch.
+- **Blocks do not migrate.** Once placed, the block runs to completion on its assigned SM (CUDA does not preempt running blocks of regular kernels).
+- **Queued regime.** When `N > n_sms`, blocks queue: first `n_sms` execute, then the next, etc. We compensate `n_iters` by `⌈N / n_sms⌉` to keep wall time ≈ `duration_s`.
+
+**Why this matters for the security argument.** Because each matmul is local to a single SM, the prover's response per matmul is a single hash (M·N output bytes hashed) — not a concatenation across SMs. The bandwidth bound in the streaming/strided protocol (§matmuls_per_response) is over the verifier-prover link only, never over an SM-to-SM internal channel. This is the simplest schedule that supports the secure-erasure-style bandwidth argument cleanly.
+
+**What the schedule is NOT.** We do **not** use a tiled matmul that spans multiple SMs (e.g., one large `cublasGemm` call where each tile lives on a different SM). That schedule would require concatenating outputs from multiple SMs before responding, complicating both the timing model and the per-SM accounting. We may revisit if a workload comes along that demands it.
+
 ## Direct hardware verification
 
 `cudaOccupancyMaxActiveBlocksPerMultiprocessor(threads=1024, smem=98304 B)` = **1**. The CUDA runtime — i.e., NVIDIA's own scheduler — confirms it can place at most 1 block per SM with these resource constraints. Combined with `grid = N`, this guarantees ≤ N distinct SMs are touched.
