@@ -1,0 +1,189 @@
+{
+  "device": "NVIDIA A100-SXM4-40GB",
+  "n_sms": 108,
+  "max_blocks_challenge": 1,
+  "max_blocks_adversary_alone": 32,
+  "calibration": {
+    "challenge": 102047194,
+    "adversary": 17047994
+  },
+  "honest": {
+    "kernel_ms": 1167.884894999986,
+    "dcgm": {
+      "fields": [
+        "sm_active",
+        "fp32_active",
+        "tensor_active",
+        "fp64_active",
+        "dram_active"
+      ],
+      "interval_ms": 100,
+      "sm_active": {
+        "count": 11,
+        "active_count": 10,
+        "mean_active": 1.0,
+        "median_active": 1.0,
+        "max_active": 1.0,
+        "min_active": 1.0,
+        "mean_all": 0.9090909090909091
+      },
+      "fp32_active": {
+        "count": 11,
+        "active_count": 10,
+        "mean_active": 0.9,
+        "median_active": 1.0,
+        "max_active": 1.0,
+        "min_active": 0.0,
+        "mean_all": 0.8851818181818182
+      },
+      "tensor_active": {
+        "count": 11,
+        "active_count": 10,
+        "mean_active": 0.0,
+        "median_active": 0.0,
+        "max_active": 0.0,
+        "min_active": 0.0,
+        "mean_all": 0.0
+      },
+      "fp64_active": {
+        "count": 11,
+        "active_count": 10,
+        "mean_active": 0.0,
+        "median_active": 0.0,
+        "max_active": 0.0,
+        "min_active": 0.0,
+        "mean_all": 0.0
+      },
+      "dram_active": {
+        "count": 11,
+        "active_count": 10,
+        "mean_active": 0.0,
+        "median_active": 0.0,
+        "max_active": 0.0,
+        "min_active": 0.0,
+        "mean_all": 0.0
+      }
+    }
+  },
+  "adversary_alone": {
+    "kernel_ms": 1494.0217219999852,
+    "dcgm": {
+      "fields": [
+        "sm_active",
+        "fp32_active",
+        "tensor_active",
+        "fp64_active",
+        "dram_active"
+      ],
+      "interval_ms": 100,
+      "sm_active": {
+        "count": 17,
+        "active_count": 15,
+        "mean_active": 0.9927333333333334,
+        "median_active": 1.0,
+        "max_active": 1.0,
+        "min_active": 0.891,
+        "mean_all": 0.8759411764705882
+      },
+      "fp32_active": {
+        "count": 17,
+        "active_count": 15,
+        "mean_active": 0.0,
+        "median_active": 0.0,
+        "max_active": 0.0,
+        "min_active": 0.0,
+        "mean_all": 0.0
+      },
+      "tensor_active": {
+        "count": 17,
+        "active_count": 15,
+        "mean_active": 0.06453333333333332,
+        "median_active": 0.065,
+        "max_active": 0.065,
+        "min_active": 0.058,
+        "mean_all": 0.05694117647058822
+      },
+      "fp64_active": {
+        "count": 17,
+        "active_count": 15,
+        "mean_active": 0.0,
+        "median_active": 0.0,
+        "max_active": 0.0,
+        "min_active": 0.0,
+        "mean_all": 0.0
+      },
+      "dram_active": {
+        "count": 17,
+        "active_count": 15,
+        "mean_active": 0.0,
+        "median_active": 0.0,
+        "max_active": 0.0,
+        "min_active": 0.0,
+        "mean_all": 0.0
+      }
+    }
+  },
+  "attack": {
+    "kernel_ms": 2650.9486209999977,
+    "dcgm": {
+      "fields": [
+        "sm_active",
+        "fp32_active",
+        "tensor_active",
+        "fp64_active",
+        "dram_active"
+      ],
+      "interval_ms": 100,
+      "sm_active": {
+        "count": 29,
+        "active_count": 27,
+        "mean_active": 0.9734444444444444,
+        "median_active": 1.0,
+        "max_active": 1.0,
+        "min_active": 0.621,
+        "mean_all": 0.9063103448275862
+      },
+      "fp32_active": {
+        "count": 29,
+        "active_count": 27,
+        "mean_active": 0.41111111111111115,
+        "median_active": 0.0,
+        "max_active": 1.0,
+        "min_active": 0.0,
+        "mean_all": 0.3827586206896552
+      },
+      "tensor_active": {
+        "count": 29,
+        "active_count": 27,
+        "mean_active": 0.03770370370370369,
+        "median_active": 0.065,
+        "max_active": 0.065,
+        "min_active": 0.0,
+        "mean_all": 0.03510344827586205
+      },
+      "fp64_active": {
+        "count": 29,
+        "active_count": 27,
+        "mean_active": 0.0,
+        "median_active": 0.0,
+        "max_active": 0.0,
+        "min_active": 0.0,
+        "mean_all": 0.0
+      },
+      "dram_active": {
+        "count": 29,
+        "active_count": 27,
+        "mean_active": 0.0,
+        "median_active": 0.0,
+        "max_active": 0.0,
+        "min_active": 0.0,
+        "mean_all": 0.0
+      }
+    }
+  },
+  "_provenance": {
+    "collected_on": "2026-04-30",
+    "host": "Lambda Cloud A100 SXM4 us-east-1",
+    "note": "Data collected by /tmp/adversary/adversary_clean.py during a multi-config sweep; the 96 KB SMEM, 1 block/SM, 1024-thread challenge variant matches the configuration in scripts/adversarial_residency.py exactly."
+  }
+}

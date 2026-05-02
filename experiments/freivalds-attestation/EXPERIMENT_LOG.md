@@ -251,3 +251,55 @@ busy kernel is a clean FP32 stress.
 Outputs landed: `data/sm_occupancy/sweep_a100_v4.json`,
 `data/sm_occupancy/flops_a100_v4.json`,
 `reports/sm_occupancy_a100_v4.md`. Instance terminated.
+
+---
+
+## 2026-04-30 — Adversarial residency on A100
+
+Threat model under test: a bounded but powerful adversary running on
+the same GPU as our proof-of-work kernel wants to perform additional
+GPU computation while our challenge is in flight. We want confidence
+they cannot.
+
+Built `scripts/adversarial_residency.py`. Two kernels, both compiled
+in the same translation unit and launched on the same device:
+
+- **Challenge kernel** — chained `fmaf` loop, one 1024-thread block
+  per SM with 96 KB dynamic SMEM and `__launch_bounds__(1024, 1)`,
+  matching the controller's `busy_kernel`. Drives FP32 pipe.
+- **Adversary kernel** — 32 threads (1 warp), 0 SMEM, runtime-loaded
+  WMMA fragments, `mma_sync` loop with periodic offset rotation to
+  defeat compiler folding. Drives BF16 tensor pipe.
+
+The two kernels target *distinct* DCGM pipe counters (1007 FP32 vs
+1004 TENSOR), so co-residence is directly observable.
+
+Three measurements: honest (challenge alone), adversary alone,
+attack (both launched on separate CUDA streams). On A100 SXM4
+(Lambda us-east-1, ~10 min, ~\$0.50):
+
+| Run | wall ms | sm_active | fp32 | tensor |
+|---|---|---|---|---|
+| Honest               | 1168 | 1.000 | **0.900** | 0.000 |
+| Adversary alone      | 1494 | 0.993 | 0.000     | **0.065** |
+| Attack (concurrent)  | 2651 | 0.973 | 0.411     | 0.038 |
+
+Sequential prediction: 1168 + 1494 = 2662 ms (deviation 11 ms).
+Concurrent prediction: max(1168, 1494) = 1494 ms (deviation 1157 ms).
+**Verdict: SEQUENTIAL.** The CUDA runtime denies adversarial
+co-residence while the challenge holds all 108 SMs (1 block/SM,
+saturating SMEM and threads). The attack's pipe-counter averages also
+match the sequential model: fp32 = 0.900 × 1168 / 2651 = 0.396
+(observed 0.411); tensor = 0.065 × 1494 / 2651 = 0.036
+(observed 0.038).
+
+Caveats — production prerequisites the verifier must enforce:
+1. MPS off (otherwise cross-process kernels can share SM scheduling).
+2. Wall-clock SLA on the response (defeats persistent-kernel attacks
+   that pre-launch before the challenge arrives).
+3. MIG configuration check (a slice of an A100/H100 leaves the rest of
+   the chip available to an adversary).
+
+Outputs landed: `scripts/adversarial_residency.py`,
+`data/adversarial_residency_a100.json`,
+`reports/adversarial_residency_a100.md`. Instance terminated.
