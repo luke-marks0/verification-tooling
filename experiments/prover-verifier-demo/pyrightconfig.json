@@ -1,0 +1,15 @@
+{
+  "include": [
+    "pkg/proverdet",
+    "cmd/prover",
+    "cmd/verifier_server",
+    "cmd/verifier_cli"
+  ],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "strict",
+  "reportMissingImports": "error",
+  "reportUnknownMemberType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownParameterType": "none"
+}
