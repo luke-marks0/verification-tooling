@@ -89,6 +89,16 @@ class ProverState:
         with self._tasks_lock:
             self.recorded_tasks.append(task)
 
+    def task_totals(self) -> tuple[int, int]:
+        """Snapshot (claimed_flops_total, task_count) of recorded tasks."""
+        with self._tasks_lock:
+            claimed = 0
+            for t in self.recorded_tasks:
+                v = t.get("claimed_flops", 0)
+                if isinstance(v, int):
+                    claimed += v
+            return claimed, len(self.recorded_tasks)
+
     def stop(self) -> None:
         try:
             self.workload_runner.stop(timeout=2.0)
@@ -201,8 +211,17 @@ class ProverHandler(BaseHTTPRequestHandler):
         if self.state is None:
             return self._send_json(500, {"error": "prover state not initialized"})
         was_running = self.state.workload_runner.is_running
-        self.state.workload_runner.stop(timeout=10.0)
-        return self._send_json(200, {"stopped": was_running})
+        observed_flops = self.state.workload_runner.stop(timeout=10.0)
+        claimed_flops, task_count = self.state.task_totals()
+        return self._send_json(
+            200,
+            {
+                "stopped": was_running,
+                "claimed_flops_total": claimed_flops,
+                "observed_flops_total": observed_flops,
+                "task_count": task_count,
+            },
+        )
 
     def _handle_post_debug_emit_frames(self) -> None:
         """Debug-only: synthesize N deterministic frames and publish them.

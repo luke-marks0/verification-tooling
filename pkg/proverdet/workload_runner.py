@@ -58,6 +58,11 @@ class WorkloadRunner:
         self._thread: threading.Thread | None = None
         self._stop_event: threading.Event | None = None
         self._current_name: str | None = None
+        # Reference to the currently-running workload object. We don't
+        # define a Protocol — we just duck-type read `observed_flops_total`
+        # in stop(). Keeps adversarial workloads' bookkeeping accessible
+        # to the prover server's /workload/stop response.
+        self._current_workload: object | None = None
 
     @property
     def is_running(self) -> bool:
@@ -88,16 +93,29 @@ class WorkloadRunner:
             self._thread = t
             self._stop_event = stop_event
             self._current_name = name
+            self._current_workload = workload
             t.start()
 
-    def stop(self, timeout: float = 10.0) -> None:
+    def stop(self, timeout: float = 10.0) -> int:
+        """Stop the workload thread; return its observed_flops_total (or 0)."""
         with self._lock:
             ev = self._stop_event
             t = self._thread
+            workload = self._current_workload
             self._stop_event = None
             self._thread = None
             self._current_name = None
+            self._current_workload = None
         if ev is not None:
             ev.set()
         if t is not None:
             t.join(timeout=timeout)
+        # Duck-type read: adversarial workloads expose their own internal
+        # FLOPs counter. Phase 8.3's compute_budget signal compares this
+        # against the graph's claimed_flops_total.
+        observed = 0
+        if workload is not None:
+            attr = getattr(workload, "observed_flops_total", 0)
+            if isinstance(attr, int):
+                observed = attr
+        return observed

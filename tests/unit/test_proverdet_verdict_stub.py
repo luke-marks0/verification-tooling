@@ -17,12 +17,14 @@ class TestVerdictStub(unittest.TestCase):
     def tearDown(self) -> None:
         self.tmp.cleanup()
 
-    def test_empty_transcript_yields_unknown(self) -> None:
+    def test_empty_transcript_yields_inference(self) -> None:
+        # No replay/verdict entries, no summaries, no traffic digest — every
+        # signal returns passed, so the binary combiner emits inference.
         result = emit_verdict(self.transcript)
-        self.assertEqual(result["verdict"], "unknown")
+        self.assertEqual(result["verdict"], "inference")
         self.assertEqual(result["reasons"], [])
 
-    def test_non_empty_transcript_still_yields_unknown(self) -> None:
+    def test_transcript_without_failing_signals_yields_inference(self) -> None:
         self.transcript.write_text(
             '{"seq":1,"direction":"sent","endpoint":"/graph",'
             '"timestamp":"2026-05-04T12:00:00Z",'
@@ -30,7 +32,7 @@ class TestVerdictStub(unittest.TestCase):
             encoding="utf-8",
         )
         result = emit_verdict(self.transcript)
-        self.assertEqual(result["verdict"], "unknown")
+        self.assertEqual(result["verdict"], "inference")
 
 
 class TestVerdictCli(unittest.TestCase):
@@ -65,7 +67,7 @@ class TestVerdictCli(unittest.TestCase):
         self.assertEqual(rc.returncode, 0, rc.stderr.decode())
         self.assertTrue(self.out.exists())
         loaded = json.loads(self.out.read_text(encoding="utf-8"))
-        self.assertEqual(loaded["verdict"], "unknown")
+        self.assertEqual(loaded["verdict"], "inference")
         self.assertEqual(loaded["reasons"], [])
 
     def test_cli_output_matches_function(self) -> None:

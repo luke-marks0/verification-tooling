@@ -1,9 +1,11 @@
 """End-to-end adversarial workload test (mixed_lora).
 
 Boots prover + verifier, runs the mixed_lora workload (gradient_steps=4)
-through the wire protocol, finalizes traffic, and runs the verdict CLI.
-Until Phase 8.3 the verdict is "unknown" — that's intentional. The 8.3
-commit will edit this test in place to assert "training_or_exfil".
+through the wire protocol, finalizes traffic, captures the workload
+summary from /workload/stop, and runs the verdict CLI. Phase 8.3's
+combiner emits `training_or_exfil` because the workload's
+observed_flops_total exceeds the (1+tolerance)*claimed_flops_total
+budget.
 """
 
 from __future__ import annotations
@@ -126,9 +128,21 @@ class TestAdversarialE2E(unittest.TestCase):
         # 2. Let it run; mixed_lora is fast on CPU so 0.5s is plenty.
         time.sleep(0.5)
 
-        # 3. Stop + finalize.
-        status, _ = http_post_json(f"http://127.0.0.1:{self.prover_port}/workload/stop", {})
+        # 3. Stop + finalize. Capture /workload/stop's summary so we can
+        # surface the workload's internal observed_flops_total to the
+        # verdict engine — that's the signal mixed_lora cheats on.
+        status, stop_body = http_post_json(f"http://127.0.0.1:{self.prover_port}/workload/stop", {})
         self.assertEqual(status, 200)
+        # Sanity-check the cheating signature before running the engine.
+        self.assertGreater(stop_body["observed_flops_total"], 0)
+        self.assertGreater(
+            stop_body["observed_flops_total"],
+            stop_body["claimed_flops_total"],
+            f"workload should observe more flops than it claimed: {stop_body}",
+        )
+        workload_summary_path = self.verifier_dir / "workload_summary.json"
+        workload_summary_path.write_text(json.dumps(stop_body), encoding="utf-8")
+
         status, fbody = http_post_json(
             f"http://127.0.0.1:{self.verifier_port}/traffic/finalize", {}
         )
@@ -137,7 +151,7 @@ class TestAdversarialE2E(unittest.TestCase):
         # 2 prompts * 10 frames * 256 bytes = 5120 bytes.
         self.assertEqual(fbody["size_bytes"], 2 * 10 * 256)
 
-        # 4. Run the verdict CLI.
+        # 4. Run the verdict CLI with the workload summary + traffic digest.
         verdict_path = self.verifier_dir / "verdict.json"
         result = subprocess.run(
             [
@@ -145,6 +159,10 @@ class TestAdversarialE2E(unittest.TestCase):
                 "cmd/verifier_cli/main.py",
                 "--transcript",
                 str(self.verifier_dir / "transcript.jsonl"),
+                "--traffic-digest",
+                str(self.verifier_dir / "traffic.digest"),
+                "--workload-summary",
+                str(workload_summary_path),
                 "--out",
                 str(verdict_path),
             ],
@@ -156,12 +174,12 @@ class TestAdversarialE2E(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, f"stderr={result.stderr}")
 
-        # 5. Until Phase 8.3 lands the verdict is "unknown" — that's fine.
-        # Phase 8.3 will edit this assertion to "training_or_exfil".
+        # 5. Combiner verdict: the gradient-step FLOPs exceed the inference
+        # budget, so we expect `training_or_exfil`.
         self.assertTrue(verdict_path.exists())
         verdict = json.loads(verdict_path.read_text(encoding="utf-8"))
-        self.assertIn("verdict", verdict)
-        self.assertIn("reasons", verdict)
+        self.assertEqual(verdict["verdict"], "training_or_exfil", verdict)
+        self.assertTrue(verdict["reasons"], "expected at least one failing-signal reason")
 
 
 if __name__ == "__main__":
