@@ -1,9 +1,15 @@
 """Replay-evidence builders for the prover.
 
-`produce_evidence` runs a Freivalds challenge for each round of the replay
-request's proof_of_work spec, stashes each per-matmul attestation in the
-provided store, and returns a `ReplayEvidence` whose `pow_stream` indexes
-those attestations.
+`produce_evidence_stream` runs a Freivalds challenge for each round of the
+replay request's proof_of_work spec, stashes each per-matmul attestation
+in the provided store, and yields a sequence of NDJSON-shaped chunks: one
+`{"kind": "pow", ...}` per round followed by a final
+`{"kind": "evidence", ...full ReplayEvidence}`. The `/replay` endpoint
+streams these chunks over an `application/x-ndjson` response (Task 6.3).
+
+`produce_evidence` is the sync wrapper; it consumes the stream and returns
+the final `ReplayEvidence`. Used by tests + Task 6.4's verifier-side
+verification.
 
 The wire dtype (`bf16` | `fp16` | `int8`) maps onto a freivalds MatmulSpec
 dtype combo. Stdlib backend supports only the `int8` mapping (with int32
@@ -15,6 +21,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -92,56 +99,57 @@ def _attestation_id(replay_id: str, matmul_id: str) -> str:
     return f"att-{h[:32]}"
 
 
-def produce_evidence(
+def check_supported(req: ReplayRequest) -> None:
+    """Pre-flight check called before /replay opens its stream."""
+    if req.proof_of_work.dtype not in _DTYPE_COMBOS:
+        raise ValueError(f"unsupported proof_of_work.dtype: {req.proof_of_work.dtype!r}")
+
+
+def produce_evidence_stream(
     req: ReplayRequest,
     *,
     freivalds_backend: FreivaldsBackend,
     attestation_store: AttestationStore,
     erasure_log_dir: Path,
-) -> ReplayEvidence:
-    """Run the proof-of-work challenge + erasure and emit ReplayEvidence."""
+) -> Iterator[dict[str, Any]]:
+    """Run PoW + erasure and yield NDJSON-shaped chunks (Task 6.3 wire format).
+
+    Yields, in order:
+      * `{"kind": "pow", **PowStreamEntry}` once per round, as each
+        Freivalds matmul completes.
+      * Exactly one final `{"kind": "evidence", **ReplayEvidence}`.
+    """
+    check_supported(req)
     pow_spec = req.proof_of_work
-    if pow_spec.dtype not in _DTYPE_COMBOS:
-        raise ValueError(f"unsupported proof_of_work.dtype: {pow_spec.dtype!r}")
     dtype_a, dtype_b, dtype_acc, dtype_c, comparison, tolerance = _DTYPE_COMBOS[pow_spec.dtype]
-
-    matmul_specs: list[MatmulSpec] = []
-    for i in range(pow_spec.rounds):
-        matmul_id = f"m-{i:04d}"
-        matmul_specs.append(
-            MatmulSpec(
-                id=matmul_id,
-                M=pow_spec.matmul_dim,
-                K=pow_spec.matmul_dim,
-                N=pow_spec.matmul_dim,
-                dtype_a=dtype_a,
-                dtype_b=dtype_b,
-                dtype_acc=dtype_acc,
-                dtype_c=dtype_c,
-                seed_a=_seed_for(req.replay_id, matmul_id, "a"),
-                seed_b=_seed_for(req.replay_id, matmul_id, "b"),
-                comparison=comparison,
-                tolerance=tolerance,
-            )
-        )
-
-    challenge = Challenge(challenge_id=f"chal-{req.replay_id}", matmuls=tuple(matmul_specs))
-    response = execute_challenge(challenge, freivalds_backend)
 
     pow_stream: list[PowStreamEntry] = []
     cumulative_t_ms = 0
     concatenated_c = bytearray()
-    for spec, result in zip(challenge.matmuls, response.results, strict=True):
-        attestation_id = _attestation_id(req.replay_id, spec.id)
-        # Each attestation is self-contained: a single-matmul Challenge
-        # plus the matching single-result Response. The verifier can rerun
-        # Freivalds against this without depending on any other attestation.
-        single_challenge = Challenge(challenge_id=challenge.challenge_id, matmuls=(spec,))
-        single_response = response.__class__(
-            challenge_id=response.challenge_id,
-            backend=response.backend,
-            results=(result,),
+    for i in range(pow_spec.rounds):
+        matmul_id = f"m-{i:04d}"
+        spec = MatmulSpec(
+            id=matmul_id,
+            M=pow_spec.matmul_dim,
+            K=pow_spec.matmul_dim,
+            N=pow_spec.matmul_dim,
+            dtype_a=dtype_a,
+            dtype_b=dtype_b,
+            dtype_acc=dtype_acc,
+            dtype_c=dtype_c,
+            seed_a=_seed_for(req.replay_id, matmul_id, "a"),
+            seed_b=_seed_for(req.replay_id, matmul_id, "b"),
+            comparison=comparison,
+            tolerance=tolerance,
         )
+        # Run one matmul at a time so we can emit a pow chunk as it
+        # completes — this is what makes the response a stream rather
+        # than a single batched response.
+        single_challenge = Challenge(challenge_id=f"chal-{req.replay_id}", matmuls=(spec,))
+        single_response = execute_challenge(single_challenge, freivalds_backend)
+        result = single_response.results[0]
+
+        attestation_id = _attestation_id(req.replay_id, spec.id)
         attestation_store.put(
             attestation_id,
             {
@@ -152,16 +160,16 @@ def produce_evidence(
         )
 
         cumulative_t_ms += max(0, int(result.wall_time_ms))
-        pow_stream.append(
-            PowStreamEntry(
-                t_ms=cumulative_t_ms,
-                freivalds_attestation_id=attestation_id,
-                matmul_dim=pow_spec.matmul_dim,
-                rounds=1,
-                dtype=pow_spec.dtype,
-            )
+        entry = PowStreamEntry(
+            t_ms=cumulative_t_ms,
+            freivalds_attestation_id=attestation_id,
+            matmul_dim=pow_spec.matmul_dim,
+            rounds=1,
+            dtype=pow_spec.dtype,
         )
+        pow_stream.append(entry)
         concatenated_c.extend(base64.b64decode(result.c_b64.encode("ascii")))
+        yield {"kind": "pow", **entry.model_dump()}
 
     output_bytes = bytes(concatenated_c)
     commitment = sha256_prefixed(output_bytes)
@@ -173,7 +181,7 @@ def produce_evidence(
         backend=HmacErasureBackend(),
     )
 
-    return ReplayEvidence(
+    evidence = ReplayEvidence(
         replay_id=req.replay_id,
         produced_at=utc_now_iso(),
         output=ReplayOutput(
@@ -183,3 +191,27 @@ def produce_evidence(
         erasure_evidence=erasure_evidence,
         pow_stream=pow_stream,
     )
+    yield {"kind": "evidence", **evidence.model_dump(exclude_none=True)}
+
+
+def produce_evidence(
+    req: ReplayRequest,
+    *,
+    freivalds_backend: FreivaldsBackend,
+    attestation_store: AttestationStore,
+    erasure_log_dir: Path,
+) -> ReplayEvidence:
+    """Sync wrapper over produce_evidence_stream — returns the final evidence."""
+    final: dict[str, Any] | None = None
+    for chunk in produce_evidence_stream(
+        req,
+        freivalds_backend=freivalds_backend,
+        attestation_store=attestation_store,
+        erasure_log_dir=erasure_log_dir,
+    ):
+        if chunk["kind"] == "evidence":
+            final = chunk
+    if final is None:
+        raise RuntimeError("produce_evidence_stream did not yield an evidence chunk")
+    body = {k: v for k, v in final.items() if k != "kind"}
+    return ReplayEvidence.model_validate(body)

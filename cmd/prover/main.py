@@ -36,7 +36,7 @@ from pkg.freivalds.backends.stdlib import StdlibBackend  # noqa: E402
 from pkg.proverdet.attestation_store import AttestationStore  # noqa: E402
 from pkg.proverdet.capture import ProverCaptureLog  # noqa: E402
 from pkg.proverdet.graph_builder import build_empty_graph  # noqa: E402
-from pkg.proverdet.replay import produce_evidence  # noqa: E402
+from pkg.proverdet.replay import check_supported, produce_evidence_stream  # noqa: E402
 from pkg.proverdet.traffic_publisher import TrafficPublisher  # noqa: E402
 from pkg.proverdet.wire import ReplayRequest  # noqa: E402
 from pkg.proverdet.workload_runner import WorkloadRunner  # noqa: E402
@@ -269,22 +269,58 @@ class ProverHandler(BaseHTTPRequestHandler):
 
         if self.state is None:
             return self._send_json(500, {"error": "prover state not initialized"})
+
+        # Pre-flight: surface a 4xx synchronously rather than mid-stream.
         try:
-            evidence = produce_evidence(
-                req,
-                freivalds_backend=self.state.freivalds_backend,
-                attestation_store=self.state.attestation_store,
-                erasure_log_dir=self.state.out_dir / "erasure",
-            )
+            check_supported(req)
         except ValueError as exc:
             return self._send_json(400, {"error": str(exc)})
-        body = evidence.model_dump(exclude_none=True)
-        # Defensive: belt-and-braces validate evidence too.
-        try:
-            validate_with_schema("replay_evidence.v1.schema.json", body)
-        except ValidationError as exc:
-            return self._send_json(500, {"error": f"evidence schema mismatch: {exc}"})
-        return self._send_json(200, body)
+
+        # Stream NDJSON: one application/x-ndjson line per chunk. We
+        # don't set Content-Length and rely on Connection: close so the
+        # client reads to EOF — simplest path with stdlib's
+        # BaseHTTPRequestHandler.
+        self.send_response(200)
+        self.send_header("Content-Type", "application/x-ndjson")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.close_connection = True
+
+        captured = bytearray()
+        evidence_seen = False
+        for chunk in produce_evidence_stream(
+            req,
+            freivalds_backend=self.state.freivalds_backend,
+            attestation_store=self.state.attestation_store,
+            erasure_log_dir=self.state.out_dir / "erasure",
+        ):
+            if chunk["kind"] == "evidence":
+                evidence_body = {k: v for k, v in chunk.items() if k != "kind"}
+                # Defensive: belt-and-braces validate evidence before sending.
+                try:
+                    validate_with_schema("replay_evidence.v1.schema.json", evidence_body)
+                except ValidationError as exc:
+                    err = (
+                        json.dumps(
+                            {"kind": "error", "error": f"evidence schema mismatch: {exc}"}
+                        ).encode("utf-8")
+                        + b"\n"
+                    )
+                    captured.extend(err)
+                    self.wfile.write(err)
+                    self.wfile.flush()
+                    break
+                evidence_seen = True
+            line = json.dumps(chunk).encode("utf-8") + b"\n"
+            captured.extend(line)
+            self.wfile.write(line)
+            self.wfile.flush()
+        self.state.capture_log.record(
+            direction="sent",
+            endpoint=self.path,
+            payload=bytes(captured),
+            status_code=200 if evidence_seen else 500,
+        )
 
 
 def _synth_frame(seed: int, index: int, size_bytes: int) -> bytes:

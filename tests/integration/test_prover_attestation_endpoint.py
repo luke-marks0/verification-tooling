@@ -11,7 +11,7 @@ from pathlib import Path
 from tests.proverdet._helpers import (
     REPO_ROOT,
     http_get_json,
-    http_post_json,
+    http_post_ndjson,
     read_bound_port,
     sandbox_env,
 )
@@ -76,13 +76,13 @@ class TestAttestationEndpoint(unittest.TestCase):
         }
 
     def test_get_attestation_returns_stored_body(self) -> None:
-        status, body = http_post_json(
+        status, entries = http_post_ndjson(
             f"http://127.0.0.1:{self.port}/replay", self._replay_request()
         )
         self.assertEqual(status, 200)
-        pow_stream = body["pow_stream"]
-        self.assertGreater(len(pow_stream), 0)
-        att_id = pow_stream[0]["freivalds_attestation_id"]
+        pow_entries = [e for e in entries if e["kind"] == "pow"]
+        self.assertGreater(len(pow_entries), 0)
+        att_id = pow_entries[0]["freivalds_attestation_id"]
 
         status, att = http_get_json(f"http://127.0.0.1:{self.port}/attestation/{att_id}")
         self.assertEqual(status, 200)

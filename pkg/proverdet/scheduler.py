@@ -14,6 +14,7 @@ import json
 import random
 import threading
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Protocol
 
@@ -23,7 +24,9 @@ from pkg.proverdet.transcript import TranscriptLog
 
 class ProverClient(Protocol):
     def get_graph(self) -> tuple[int, dict[str, object]]: ...
-    def post_replay(self, request: dict[str, object]) -> tuple[int, dict[str, object]]: ...
+    def post_replay(
+        self, request: dict[str, object]
+    ) -> Iterator[tuple[int, dict[str, object]]]: ...
 
 
 class Clock(Protocol):
@@ -164,12 +167,21 @@ class VerifierScheduler:
         request_bytes = canonical_json_text(request).encode("utf-8")
         self._record_sent("/replay", request_bytes)
         try:
-            status, body = self.client.post_replay(request)
+            stream = self.client.post_replay(request)
         except Exception as exc:
             self._record_received("/replay", str(exc).encode("utf-8"), 599)
             return
-        body_bytes = canonical_json_text(body).encode("utf-8")
-        self._record_received("/replay", body_bytes, status)
+        # Each NDJSON chunk -> one transcript entry. The final chunk
+        # (kind=evidence) lands as the last received entry; intermediate
+        # `kind=pow` chunks land in arrival order. Errors mid-stream are
+        # captured as a `kind=error` chunk by the prover; we simply record
+        # them like any other.
+        try:
+            for status, chunk in stream:
+                chunk_bytes = canonical_json_text(chunk).encode("utf-8")
+                self._record_received("/replay", chunk_bytes, status)
+        except Exception as exc:
+            self._record_received("/replay", str(exc).encode("utf-8"), 599)
 
 
 # -- HTTP client used in production (verifier server's daemon thread) --
@@ -189,7 +201,8 @@ class HttpProverClient:
             body = r.read()
             return r.status, json.loads(body) if body else {}
 
-    def post_replay(self, request: dict[str, object]) -> tuple[int, dict[str, object]]:
+    def post_replay(self, request: dict[str, object]) -> Iterator[tuple[int, dict[str, object]]]:
+        """Stream the prover's NDJSON /replay response chunk by chunk."""
         import urllib.error
         import urllib.request
 
@@ -202,8 +215,18 @@ class HttpProverClient:
         )
         try:
             with urllib.request.urlopen(req, timeout=self.timeout_s) as r:
-                body = r.read()
-                return r.status, json.loads(body) if body else {}
+                status = r.status
+                for raw_line in r:
+                    line = raw_line.strip()
+                    if not line:
+                        continue
+                    yield status, json.loads(line)
         except urllib.error.HTTPError as e:
             body = e.read()
-            return e.code, json.loads(body) if body else {}
+            payload: dict[str, object] = {}
+            if body:
+                try:
+                    payload = json.loads(body)
+                except json.JSONDecodeError:
+                    payload = {"error": body.decode("utf-8", errors="replace")}
+            yield e.code, payload

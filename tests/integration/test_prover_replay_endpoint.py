@@ -12,6 +12,7 @@ from pkg.common.contracts import validate_with_schema
 from tests.proverdet._helpers import (
     REPO_ROOT,
     http_post_json,
+    http_post_ndjson,
     read_bound_port,
     sandbox_env,
 )
@@ -86,12 +87,14 @@ class TestReplayEndpoint(_ProverFixture):
         }
 
     def test_post_replay_returns_valid_evidence(self) -> None:
-        status, body = http_post_json(
+        status, entries = http_post_ndjson(
             f"http://127.0.0.1:{self.port}/replay", self._replay_request()
         )
         self.assertEqual(status, 200)
-        self.assertEqual(body["replay_id"], "r-1")
-        validate_with_schema("replay_evidence.v1.schema.json", body)
+        self.assertEqual(entries[-1]["kind"], "evidence")
+        ev_body = {k: v for k, v in entries[-1].items() if k != "kind"}
+        self.assertEqual(ev_body["replay_id"], "r-1")
+        validate_with_schema("replay_evidence.v1.schema.json", ev_body)
 
     def test_post_replay_with_missing_pod_id_returns_400(self) -> None:
         bad = self._replay_request()
@@ -117,7 +120,7 @@ class TestReplayEndpoint(_ProverFixture):
     def test_capture_log_records_request_and_response(self) -> None:
         import json as _json
 
-        status, _ = http_post_json(f"http://127.0.0.1:{self.port}/replay", self._replay_request())
+        status, _ = http_post_ndjson(f"http://127.0.0.1:{self.port}/replay", self._replay_request())
         self.assertEqual(status, 200)
         capture = Path(self.tmp.name) / "capture.jsonl"  # type: ignore[arg-type]
         lines = [_json.loads(line) for line in capture.read_text(encoding="utf-8").splitlines()]

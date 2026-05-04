@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from collections.abc import Iterator
 from pathlib import Path
 
 from pkg.proverdet.scheduler import VerifierScheduler
@@ -30,19 +31,38 @@ class _FakeClient:
             "transmissions": [],
         }
 
-    def post_replay(self, request: dict) -> tuple[int, dict]:
+    def post_replay(self, request: dict) -> Iterator[tuple[int, dict]]:
         self.replay_calls.append(request["replay_id"])
-        return 200, {
-            "replay_id": request["replay_id"],
-            "produced_at": "2026-05-04T12:00:00Z",
-            "output": {"commitment": "sha256:" + "0" * 64, "bytes_b64": "AA=="},
-            "erasure_evidence": {
-                "rounds": request["erasure"]["rounds"],
-                "passed": request["erasure"]["rounds"],
-                "log_path": "e.jsonl",
+        # Mimic the prover's NDJSON wire shape: one pow chunk per round
+        # in the request, then a final evidence chunk.
+        rounds = int(request["proof_of_work"]["rounds"])
+        for i in range(rounds):
+            yield (
+                200,
+                {
+                    "kind": "pow",
+                    "t_ms": (i + 1) * 10,
+                    "freivalds_attestation_id": f"att-fake-{request['replay_id']}-{i}",
+                    "matmul_dim": int(request["proof_of_work"]["matmul_dim"]),
+                    "rounds": 1,
+                    "dtype": str(request["proof_of_work"]["dtype"]),
+                },
+            )
+        yield (
+            200,
+            {
+                "kind": "evidence",
+                "replay_id": request["replay_id"],
+                "produced_at": "2026-05-04T12:00:00Z",
+                "output": {"commitment": "sha256:" + "0" * 64, "bytes_b64": "AA=="},
+                "erasure_evidence": {
+                    "rounds": request["erasure"]["rounds"],
+                    "passed": request["erasure"]["rounds"],
+                    "log_path": "e.jsonl",
+                },
+                "pow_stream": [],
             },
-            "pow_stream": [],
-        }
+        )
 
 
 class _FakeClock:

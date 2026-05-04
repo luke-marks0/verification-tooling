@@ -40,9 +40,7 @@ def http_get_json(url: str, timeout: float = 5.0) -> tuple[int, Any]:
             return r.status, body
 
 
-def http_post_json(
-    url: str, payload: dict[str, Any], timeout: float = 5.0
-) -> tuple[int, Any]:
+def http_post_json(url: str, payload: dict[str, Any], timeout: float = 5.0) -> tuple[int, Any]:
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         url,
@@ -63,6 +61,40 @@ def http_post_json(
             return e.code, json.loads(body)
         except json.JSONDecodeError:
             return e.code, body
+
+
+def http_post_ndjson(
+    url: str, payload: dict[str, Any], timeout: float = 10.0
+) -> tuple[int, list[dict[str, Any]]]:
+    """POST JSON; read response as NDJSON (one parsed obj per non-empty line).
+
+    The /replay endpoint streams `application/x-ndjson` (Task 6.3): one
+    `{"kind": "pow", ...}` per round followed by exactly one
+    `{"kind": "evidence", ...}`.
+    """
+    data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:  # noqa: S310
+            entries: list[dict[str, Any]] = []
+            for raw_line in r:
+                line = raw_line.strip()
+                if not line:
+                    continue
+                entries.append(json.loads(line))
+            return r.status, entries
+    except urllib.error.HTTPError as e:  # noqa: F821
+        body = e.read()
+        try:
+            parsed = json.loads(body)
+        except json.JSONDecodeError:
+            parsed = {"raw": body.decode("utf-8", errors="replace")}
+        return e.code, [parsed]
 
 
 def http_post_bytes(
