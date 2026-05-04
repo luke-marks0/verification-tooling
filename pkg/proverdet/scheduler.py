@@ -216,7 +216,14 @@ class VerifierScheduler:
         verdict_bytes = canonical_json_text(
             {"replay_id": ev.replay_id, "passed": verdict.passed, "reasons": verdict.reasons}
         ).encode("utf-8")
-        self._record_received("/replay/verdict", verdict_bytes, 200 if verdict.passed else 422)
+        # Embed the replay_id in the endpoint so signals (Phase 8) can
+        # name failing replays without depending on the payload bytes —
+        # the transcript only records the digest.
+        self._record_received(
+            f"/replay/verdict/{ev.replay_id}",
+            verdict_bytes,
+            200 if verdict.passed else 422,
+        )
 
 
 # -- HTTP client used in production (verifier server's daemon thread) --
