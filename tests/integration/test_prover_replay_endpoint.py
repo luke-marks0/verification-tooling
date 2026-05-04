@@ -77,8 +77,8 @@ class TestReplayEndpoint(_ProverFixture):
                 "rounds": 2,
             },
             "proof_of_work": {
-                "matmul_dim": 64,
-                "dtype": "bf16",
+                "matmul_dim": 8,
+                "dtype": "int8",
                 "rounds": 1,
                 "report_every_ms": 100,
             },
@@ -102,7 +102,7 @@ class TestReplayEndpoint(_ProverFixture):
 
     def test_post_replay_with_invalid_dtype_returns_400(self) -> None:
         bad = self._replay_request()
-        bad["proof_of_work"]["dtype"] = "fp64"
+        bad["proof_of_work"]["dtype"] = "fp64"  # not in {bf16, fp16, int8}
         status, body = http_post_json(f"http://127.0.0.1:{self.port}/replay", bad)
         self.assertEqual(status, 400)
         self.assertIn("error", body)

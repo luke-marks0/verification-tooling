@@ -32,9 +32,11 @@ if str(REPO_ROOT) not in sys.path:
 from pydantic import ValidationError as PydanticValidationError  # noqa: E402
 
 from pkg.common.contracts import ValidationError, validate_with_schema  # noqa: E402
+from pkg.freivalds.backends.stdlib import StdlibBackend  # noqa: E402
+from pkg.proverdet.attestation_store import AttestationStore  # noqa: E402
 from pkg.proverdet.capture import ProverCaptureLog  # noqa: E402
 from pkg.proverdet.graph_builder import build_empty_graph  # noqa: E402
-from pkg.proverdet.replay import stub_evidence  # noqa: E402
+from pkg.proverdet.replay import produce_evidence  # noqa: E402
 from pkg.proverdet.traffic_publisher import TrafficPublisher  # noqa: E402
 from pkg.proverdet.wire import ReplayRequest  # noqa: E402
 from pkg.proverdet.workload_runner import WorkloadRunner  # noqa: E402
@@ -71,6 +73,11 @@ class ProverState:
             publish_frame=self._publish_frame,
             record_task=self._record_task,
         )
+        self.attestation_store = AttestationStore()
+        # Stdlib backend keeps tests CPU-only. The torch backend can swap in
+        # for fp16/bf16 paths once GPU is available; the wire dtype check in
+        # produce_evidence will raise if the backend can't handle it.
+        self.freivalds_backend = StdlibBackend()
 
     def _publish_frame(self, frame: bytes) -> None:
         if self.traffic_publisher is None:
@@ -128,7 +135,17 @@ class ProverHandler(BaseHTTPRequestHandler):
             return self._send_json(200, {"ok": True})
         if self.path == "/graph":
             return self._handle_get_graph()
+        if self.path.startswith("/attestation/"):
+            return self._handle_get_attestation(self.path[len("/attestation/") :])
         return self._send_json(404, {"error": "not found"})
+
+    def _handle_get_attestation(self, attestation_id: str) -> None:
+        if self.state is None:
+            return self._send_json(500, {"error": "prover state not initialized"})
+        body = self.state.attestation_store.get(attestation_id)
+        if body is None:
+            return self._send_json(404, {"error": f"unknown attestation: {attestation_id}"})
+        return self._send_json(200, body)
 
     def _handle_get_graph(self) -> None:
         if self.state is None:
@@ -250,7 +267,16 @@ class ProverHandler(BaseHTTPRequestHandler):
         except PydanticValidationError as exc:
             return self._send_json(400, {"error": str(exc)})
 
-        evidence = stub_evidence(req)
+        if self.state is None:
+            return self._send_json(500, {"error": "prover state not initialized"})
+        try:
+            evidence = produce_evidence(
+                req,
+                freivalds_backend=self.state.freivalds_backend,
+                attestation_store=self.state.attestation_store,
+            )
+        except ValueError as exc:
+            return self._send_json(400, {"error": str(exc)})
         body = evidence.model_dump(exclude_none=True)
         # Defensive: belt-and-braces validate evidence too.
         try:

@@ -55,8 +55,8 @@ def _build_replay_request(replay_id: str, rng: random.Random) -> dict[str, objec
             "rounds": 2,
         },
         "proof_of_work": {
-            "matmul_dim": 64,
-            "dtype": "bf16",
+            "matmul_dim": 8,
+            "dtype": "int8",
             "rounds": 1,
             "report_every_ms": 100,
         },
