@@ -144,14 +144,25 @@ class DcgmSmActiveSampler:
 
 
 # DCGM profiling fields. See nvidia-dcgm/dcgm_fields.h.
+# Field IDs 1009-1012 require DCGM >= 3.x; older versions will reject them at
+# `dcgmi dmon` time. tensor_active (1004) is the umbrella counter and rises
+# whenever the tensor cores fire — IMMA (integer matmul), HMMA (half/bfloat
+# matmul), or DFMA (double matmul). The IMMA/HMMA/DFMA breakdown lets you
+# distinguish what kind of tensor work the chip is doing. pipe_int_active
+# (1012) catches scalar integer arithmetic on the dedicated INT32 cores
+# (separate from FP32 cores on Volta+).
 DCGM_FIELDS = {
-    "sm_active":     1002,  # ratio of cycles any SM was busy (averaged across all SMs)
-    "sm_occupancy":  1003,  # ratio of resident warps : max possible warps per SM
-    "tensor_active": 1004,  # ratio of cycles tensor pipe was active
-    "dram_active":   1005,
-    "fp64_active":   1006,
-    "fp32_active":   1007,  # ratio of cycles FP32 pipe was active
-    "fp16_active":   1008,
+    "sm_active":          1002,  # ratio of cycles any SM was busy (averaged across all SMs)
+    "sm_occupancy":       1003,  # ratio of resident warps : max possible warps per SM
+    "tensor_active":      1004,  # any tensor-core work (IMMA + HMMA + DFMA)
+    "dram_active":        1005,
+    "fp64_active":        1006,
+    "fp32_active":        1007,  # ratio of cycles FP32 pipe was active
+    "fp16_active":        1008,
+    "tensor_imma_active": 1009,  # tensor cores doing INT8/INT4 matmul
+    "tensor_hmma_active": 1010,  # tensor cores doing FP16/BF16 matmul
+    "tensor_dfma_active": 1011,  # tensor cores doing FP64 matmul (Hopper+)
+    "pipe_int_active":    1012,  # scalar integer arithmetic on INT32 cores
 }
 
 
