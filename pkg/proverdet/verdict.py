@@ -8,8 +8,9 @@ Three signals plus a combiner:
     (1 + tolerance) * sum(claimed_flops). Reads `summaries`. Phase 8.3
     accepts an optional `workload_summary` adding workload-internal
     counters (the mixed_lora gradient-step fingerprint).
-  * `bandwidth_signal` — traffic_size must not exceed
-    (1 + tolerance) * claimed_artifact_bytes. Catches lora_loading.
+  * `bandwidth_signal` — traffic_size must not exceed claimed_artifact_bytes
+    (zero tolerance: the verifier's tap gives ground-truth bytes; any extra
+    byte is unattributed traffic). Catches lora_loading.
 
 Combiner: any failed signal fires `"training_or_exfil"` with reasons
 concatenated; otherwise `"inference"`. We intentionally don't preserve
@@ -114,9 +115,17 @@ def bandwidth_signal(
     traffic_size: int,
     claimed_artifact_bytes: int,
     *,
-    tolerance: float = 0.10,
+    tolerance: float = 0.0,
 ) -> SignalResult:
     """`passed` iff traffic_size <= (1 + tolerance) * claimed_artifact_bytes.
+
+    Default tolerance is **zero**: the verifier observes ground-truth bytes
+    on the wire from a trusted tap, and the prover's claim is an integer
+    byte count — there is no float drift, no encoding overhead, and no
+    timing noise to absorb. Any extra byte is unattributed traffic and
+    should fire the signal. The `tolerance` knob is kept for callers who
+    want a soft margin during early bring-up; production should leave it
+    at 0.
 
     When `claimed_artifact_bytes == 0` we can't draw a conclusion (no
     baseline) — return passed and rely on the other signals. Otherwise the
@@ -125,7 +134,7 @@ def bandwidth_signal(
     """
     if claimed_artifact_bytes <= 0:
         return SignalResult(passed=True, reasons=[])
-    threshold = (1.0 + tolerance) * claimed_artifact_bytes
+    threshold = int((1.0 + tolerance) * claimed_artifact_bytes)
     if traffic_size > threshold:
         return SignalResult(
             passed=False,
@@ -199,7 +208,10 @@ def emit_verdict(
 
     correctness = replay_correctness(transcript_entries)
     budget = compute_budget(summaries, workload_summary=workload_summary, tolerance=tolerance)
-    bandwidth = bandwidth_signal(traffic_size, claimed_artifact_bytes, tolerance=tolerance)
+    # Bandwidth runs at zero tolerance regardless of `tolerance` — bytes are
+    # bytes; the verifier's tap is trusted; there is no noise envelope to
+    # widen. The `tolerance` arg here only affects compute_budget.
+    bandwidth = bandwidth_signal(traffic_size, claimed_artifact_bytes)
 
     reasons: list[str] = []
     if not correctness.passed:

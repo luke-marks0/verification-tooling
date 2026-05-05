@@ -147,7 +147,8 @@ class TestVerdictCombiner(unittest.TestCase):
         )
         traffic_digest = self.dir / "traffic.digest"
         traffic_digest.write_text("sha256:" + "0" * 64 + "\n", encoding="utf-8")
-        # 100x baseline — well above the 1.10 tolerance.
+        # 100x baseline — bandwidth signal fires at zero tolerance the moment
+        # traffic exceeds the claim by even one byte; 100x is unambiguous.
         (self.dir / "traffic.bin").write_bytes(b"x" * 25_600)
 
         result = self._emit(traffic_digest=traffic_digest)

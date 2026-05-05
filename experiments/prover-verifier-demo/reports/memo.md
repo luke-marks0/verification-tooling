@@ -33,10 +33,15 @@ The verdict engine combines three signals at the verifier:
 1. **replay_correctness** — every recorded `/replay/verdict/{id}` was 200.
 2. **compute_budget** — `Σ observed_flops ≤ (1 + 0.10) · Σ claimed_flops`,
    summing both the scheduler's evidence and the workload's
-   `/workload/stop` summary.
-3. **bandwidth** — `traffic_size ≤ (1 + 0.10) · claimed_artifact_bytes`,
-   where `claimed_artifact_bytes` is the inference-shape baseline from the
-   workload's recorded tasks.
+   `/workload/stop` summary. The 10 % slack is a (weak) hand-wave for
+   future kernel-timing noise; spurious for the int-counted FLOPs in this
+   demo, kept on this signal for now.
+3. **bandwidth** — `traffic_size ≤ claimed_artifact_bytes`, **zero
+   tolerance**. The verifier observes ground-truth bytes from a trusted
+   tap and the claim is an integer byte count; any extra byte is
+   unattributed traffic. (See "Limitations" — the principled check is
+   structural per-transmission attribution against the graph, not a
+   sums-comparison; this signal is a stepping stone to that one.)
 
 Any failed signal flips the binary verdict to `training_or_exfil` with
 the failing reasons concatenated; only when all three pass does the
@@ -72,15 +77,15 @@ sequenceDiagram
     P->>V: POST /traffic (only the inference frames; gradient steps emit no bytes)
     V->>P: POST /workload/stop
     P-->>V: 200 { claimed_flops_total: 5120, observed_flops_total: 21504 }
-    V->>V: compute_budget fails: 21504 > 1.10 · 5120
+    V->>V: compute_budget fails: 21504 > 1.10 · 5120 (compute keeps 10 % slack)
     V->>V: verdict = training_or_exfil
 ```
 
 The `lora_loading` scenario is symmetric on the bandwidth axis: the
 workload downloads a 512 KB blob from an external URL and republishes
 the bytes on-wire **without** calling `record_task`, so `traffic_size`
-exceeds `(1 + 0.10) · claimed_artifact_bytes` and the bandwidth signal
-trips.
+exceeds `claimed_artifact_bytes` (by the size of the unattributed blob)
+and the bandwidth signal trips.
 
 ## Threat model
 
@@ -132,9 +137,21 @@ viewer](../viewer.html) (`file://` — no server needed).
 - **Stdlib only.** No DPDK, no kernel-bypass, no GPU path. `enforce_eager`
   + Freivalds at int8 is enough on CPU; `bf16`/`fp16` paths are gated on
   a torch backend that lights up only on GPU hosts.
-- **Tolerance is fixed at 10 %.** Picked to swallow timestamp noise and
-  benign drift; an adversary that stays under 10 % over-budget evades
-  the compute signal. The full sweep would tune this per-workload.
+- **Compute-budget tolerance is fixed at 10 %.** Picked to swallow
+  timestamp noise and benign drift; an adversary that stays under 10 %
+  over-budget evades the compute signal. The full sweep would tune this
+  per-workload. (Bandwidth's tolerance, by contrast, is **zero** — bytes
+  are bytes; see next bullet.)
+- **Bandwidth signal is sums-comparison, not structural attribution.**
+  The principled check is: every observed transmission's
+  `{tap_id, tap_seq, artifact_id, commitment, size}` matches a transmission
+  declared in the graph; anything observed-but-not-declared is the cheating
+  signal, and the predicate has no slack at all. The current implementation
+  compares totals because the placeholder `/graph` declares no transmissions
+  to attribute against, and `/traffic` frames are untagged byte streams. The
+  totals check is enough for `lora_loading` (a 200× blow-up isn't subtle)
+  but it would miss an attacker who added a few unattributed bytes between
+  every legitimate frame. Real fix lands with the task graph.
 
 ## Reproducing on two machines
 
