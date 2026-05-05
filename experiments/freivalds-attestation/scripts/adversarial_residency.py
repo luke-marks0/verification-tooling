@@ -228,8 +228,16 @@ def main():
 
     res["calibration"] = {"challenge": n_chal, "adversary": n_adv}
 
+    # Every monitored arithmetic pipe an off-FP32 adversary could land on.
+    # tensor_active is the umbrella (catches IMMA + HMMA + DFMA); the sub-
+    # type breakdowns let us distinguish integer-tensor from FP-tensor work.
+    # pipe_int_active catches scalar INT32 matmul on the dedicated INT cores.
+    # Anything not in this list (SFU, LSU, branch unit, TMA / cp.async)
+    # has no DCGM counter and is documented as a known blind spot.
     fields = ["sm_active", "fp32_active", "tensor_active",
-              "fp64_active", "dram_active"]
+              "tensor_imma_active", "tensor_hmma_active", "tensor_dfma_active",
+              "fp64_active", "fp16_active", "pipe_int_active",
+              "dram_active"]
     from dcgm_sampler import DcgmMultiFieldSampler
 
     def measure(label, fn):
