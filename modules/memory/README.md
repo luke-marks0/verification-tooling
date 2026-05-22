@@ -25,6 +25,9 @@ Integrates with the attestation flow via `pkg/proverdet/erasure.py`
 (protocol/prover/verifier/noise + `memory/{dram,hbm,nvme}.py`),
 `experiments/memory_wipe/scripts/`.
 
-**Status.** ⚠️ Phase 2 promotion. `src/pose/` is already a clean package
-(its own `pyproject.toml`); the plan promotes it to `modules/memory/pose/` with a
-compat shim so existing experiment scripts keep working.
+**Status.** Facade present in `modules/memory/api.py`: `load_pose("protocol")`,
+`load_pose("prover")`, `load_pose("memory.hbm")`, etc. (lazy — no GPU needed to
+import). The `pose` package is **not relocated**: it's a separately-deployed
+artifact (its own `pyproject.toml`, installed via `uv` on the target box), so the
+facade imports it from `experiments/memory_wipe/src` rather than moving it (a
+move would break the remote install workflow, which CI can't verify).

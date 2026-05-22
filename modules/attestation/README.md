@@ -29,5 +29,7 @@ runs on the serving GPU.
 `cmd/prover`, `cmd/verifier_{cli,server}`. The prover-verifier-demo composes these
 end-to-end (`experiments/prover-verifier-demo/`).
 
-**Status.** Mature primitives. A unifying `modules/attestation/api.py` facade
-lands in Phase 2.
+**Status.** Mature. Facade in `modules/attestation/api.py`: `attest_matmuls()`
+(Freivalds round-trip, stdlib backend by default), `commit_token()` /
+`commit_token_stream()`, `verify_runs()`, plus the `Challenge`/`MatmulSpec`/
+`AttestationReport` types.

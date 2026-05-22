@@ -25,5 +25,8 @@ the helpers.
 **Underlying code.** `deploy/{lambda,vast,warden}/`, `scripts/lambda_cli.py`,
 `demo/run_demo.py`, `pkg/common/`.
 
-**Status.** Provisioning is rough shell scripts (functional for manual ops). A
-"replay-server" sub-routine and a thin facade are Phase 2.
+**Status.** Facade in `modules/utils/api.py` re-exports the canonical-JSON /
+digest / schema-validation helpers (`canonical_json_bytes`, `sha256_prefixed`,
+`validate_with_schema`, …). Provisioning remains rough shell scripts under
+`deploy/` (functional for manual ops); a "replay-server" sub-routine is a later
+follow-up.

@@ -31,5 +31,7 @@ the Nix store. The OCI image pre-sets `VLLM_BATCH_INVARIANT=1`,
 **Underlying code.** `flake.nix`, `cmd/builder/main.py`, `lockfiles/`,
 `native/libnetdet/` (built via `make build-libnetdet`).
 
-**Status.** Production-grade. A Python facade (`modules/build/api.py` wrapping
-`nix build` + `cmd/builder`) lands in Phase 2.
+**Status.** Production-grade. Python facade in `modules/build/api.py`:
+`build_runtime(lockfile)` runs anywhere (used by `Pipeline.build`);
+`build_oci()`/`build_closure()`/`nix_build(attr)` shell out to `nix build`
+(require Nix).
