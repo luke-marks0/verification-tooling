@@ -121,9 +121,42 @@ python3 cmd/runner/main.py --manifest manifests/qwen3-1.7b.manifest.json \
 
 - **Prover ↔ Verifier protocol** — wire-protocol demo that detects hidden training and exfiltration from external evidence alone. See [experiments/prover-verifier-demo/reports/memo.md](experiments/prover-verifier-demo/reports/memo.md) (CPU-only; `cd experiments/prover-verifier-demo && ./demo.sh --quick`).
 
+## Capabilities
+
+The stack is organized **by function**. Each capability has a documented
+interface ([`modules/`](modules/)); [`workflows/`](workflows/) is the recipe book
+that composes them.
+
+> 💡 **New here, or looking for ideas of what to build?** See
+> [**Ideas & use cases**](docs/use-cases.md) — a plain-language tour of what this
+> can do.
+
+| Capability | What it does | Start here |
+|---|---|---|
+| [build](modules/build/) | Hermetic, reproducible runtime + OCI image | `nix build .#oci` |
+| [inference](modules/inference/) | Bitwise-deterministic vLLM (the c3 config) | `modules/inference/` |
+| [network](modules/network/) | Deterministic L2 egress frames | `modules.network.egress_frames(...)` |
+| [memory](modules/memory/) | PoSE memory wipe + erasure attestation | `modules/memory/` |
+| [attestation](modules/attestation/) | Matmul / token / replay verification | `cmd/verifier`, `pkg/freivalds` |
+| [utils](modules/utils/) | Provisioning, replay server, helpers | `deploy/`, `scripts/lambda_cli.py` |
+
+Compose them in a few lines via [`modules.Pipeline`](modules/pipeline.py):
+
+```python
+from modules import Pipeline
+report = (Pipeline.from_manifest("manifests/qwen3-1.7b.manifest.json")
+          .resolve().build().run("/tmp/a").run("/tmp/b").verify())
+assert report["status"] == "conformant"
+```
+
+See the [capability map](modules/README.md) and the
+[modularization plan](docs/plans/repo-modularization.md).
+
 ## Repository Structure
 
 ```
+modules/          Capability layer (build, inference, network, memory, attestation, utils) + Pipeline
+workflows/        Recipe book — runnable compositions of the modules
 cmd/
   server/         Proxy server with POST/GET /manifest endpoint
   resolver/       Manifest + HF resolution -> lockfile

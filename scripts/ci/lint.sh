@@ -18,6 +18,6 @@ done < <(find scripts/ci -maxdepth 1 -type f -name '*.sh' | sort)
 
 while IFS= read -r pyfile; do
   python3 -m py_compile "$pyfile"
-done < <(find cmd pkg scripts tests -type f -name '*.py' | sort)
+done < <(find cmd pkg scripts tests modules workflows -type f -name '*.py' | sort)
 
 log "Lint checks passed"
