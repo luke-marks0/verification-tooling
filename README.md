@@ -127,6 +127,10 @@ The stack is organized **by function**. Each capability has a documented
 interface ([`modules/`](modules/)); [`workflows/`](workflows/) is the recipe book
 that composes them.
 
+> 💡 **New here, or looking for ideas of what to build?** See
+> [**Ideas & use cases**](docs/use-cases.md) — a plain-language tour of what this
+> can do.
+
 | Capability | What it does | Start here |
 |---|---|---|
 | [build](modules/build/) | Hermetic, reproducible runtime + OCI image | `nix build .#oci` |
