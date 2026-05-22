@@ -8,6 +8,7 @@ no prose, no bespoke bash.
 |---|---|---|
 | [`deterministic_inference_server.py`](deterministic_inference_server.py) | build + inference + network | `python3 workflows/deterministic_inference_server.py` |
 | [`deterministic_lora_training.py`](deterministic_lora_training.py) | build + inference (+ LoRA workload) | `python3 workflows/deterministic_lora_training.py --dry-run` |
+| [`verified_inference.py`](verified_inference.py) | inference + attestation (Freivalds) | `python3 workflows/verified_inference.py` |
 
 ## Conventions
 
