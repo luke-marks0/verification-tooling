@@ -26,17 +26,31 @@ python3 cmd/runner/main.py --manifest manifests/qwen3-1.7b.manifest.json --lockf
 ## Code layout
 
 ```
+modules/       — Capability layer (build, inference, network, memory, attestation, utils) + Pipeline; curated public interface over pkg/cmd/nix
+workflows/     — Recipe book: runnable compositions of modules (e.g. deterministic_inference_server.py)
 cmd/           — CLI entry points (runner, server, resolver, builder, verifier, capture)
 pkg/           — Shared library code (manifest model, networkdet, common utilities)
 schemas/       — JSON Schema definitions (manifest, lockfile, run_bundle)
 manifests/     — Model manifest files
-tests/         — unit/, integration/, e2e/, determinism/, fixtures/
+tests/         — unit/, integration/, e2e/, determinism/, modules/, fixtures/
 scripts/ci/    — CI scripts (schema gates, conformance checks, test harnesses)
 scripts/       — General utilities (reproduce.sh)
 experiments/   — All experiments, organized by topic (see below)
 docs/          — ADRs, conformance docs, diagrams, release policy
 docs/plans/    — Implementation plans (code changes, not experiments)
 ```
+
+## Capability modules and workflows
+
+The repo is organized **by function**. `modules/<capability>/` is a curated,
+documented public interface over the primitives in `pkg/`, `cmd/`, and
+`flake.nix` — it re-exports rather than relocates, so `pkg/` and its tests are
+untouched. A capability need not be a Python package (build/utils are nix +
+shell); the contract is a documented `README.md`, and for Python ones a small
+`api.py`. `workflows/` composes modules via `modules.Pipeline` into runnable
+recipes. New modules: add a `README.md` (Purpose · Interface · Artifacts ·
+Requirements · Example) and a smoke test in `tests/modules/`. See
+`docs/plans/repo-modularization.md`.
 
 ## Experiment organization
 
