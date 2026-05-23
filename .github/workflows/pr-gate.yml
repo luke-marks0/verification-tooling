@@ -30,6 +30,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Python dependencies
-        run: pip install pydantic
+        run: pip install pydantic hypothesis matplotlib
       - name: Fast Tests
         run: bash scripts/ci/test_fast.sh
