@@ -1,6 +1,6 @@
 # CI Gates
 
-This repository defines four CI gate tiers aligned with `plan/BUILD_PLAN.md`.
+This repository defines four CI gate tiers aligned with `.internal/plan/BUILD_PLAN.md`.
 
 ## PR Gate
 

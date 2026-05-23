@@ -1,6 +1,6 @@
 # Conformance Checklist
 
-Track implementation and test coverage against `plan/spec.md`.
+Track implementation and test coverage against `.internal/plan/spec.md`.
 
 ## Source of Truth
 

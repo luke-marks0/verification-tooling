@@ -1,6 +1,6 @@
 # Spec vs Implementation Review
 
-Reviewed 2026-03-15 against `plan/spec.md` (commit cb9c10e).
+Reviewed 2026-03-15 against `.internal/plan/spec.md` (commit cb9c10e).
 
 ## Critical Bugs (will crash or produce wrong results)
 
