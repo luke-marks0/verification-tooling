@@ -5,13 +5,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pkg.proverdet.erasure import (
+from modules.attestation.proverdet.erasure import (
     ErasureRoundLog,
     HmacErasureBackend,
     run_erasure,
     verify_round_log,
 )
-from pkg.proverdet.wire import ErasureSpec
+from modules.attestation.proverdet.wire import ErasureSpec
 
 
 def _spec(rounds: int = 4, *, seed: str = "deadbeefdeadbeef") -> ErasureSpec:

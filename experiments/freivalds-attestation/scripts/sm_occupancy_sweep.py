@@ -50,7 +50,7 @@ if str(REPO_ROOT) not in sys.path:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from pkg.common.deterministic import canonical_json_text, utc_now_iso
+from modules.core.common.deterministic import canonical_json_text, utc_now_iso
 
 
 # 96 KB per block forces 1 block / SM on A100/H100 (≥48 KB SMEM/SM

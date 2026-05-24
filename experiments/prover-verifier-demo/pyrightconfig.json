@@ -1,9 +1,9 @@
 {
   "include": [
-    "../../pkg/proverdet",
-    "../../cmd/prover",
-    "../../cmd/verifier_server",
-    "../../cmd/verifier_cli"
+    "../../modules/attestation/proverdet",
+    "../../modules/attestation/prover",
+    "../../modules/attestation/verifier_server",
+    "../../modules/attestation/verifier_cli"
   ],
   "extraPaths": ["../.."],
   "pythonVersion": "3.11",

@@ -29,7 +29,7 @@ Each chunk is 30,000 tokens of greedy decoding (temperature=0). Same container i
  │  ┌────────────────────────────────────────────────────────────────┐  │
  │  │                    Nix Container Image                         │  │
  │  │  ┌──────────────────────────────────────────────────────────┐  │  │
- │  │  │ Proxy Server (cmd/server/main.py)                        │  │  │
+ │  │  │ Proxy Server (modules/inference/server/main.py)                        │  │  │
  │  │  │  POST /manifest ── validate schema                       │  │  │
  │  │  │                  ── verify GPU model, count, driver       │  │  │
  │  │  │                  ── verify model file digests             │  │  │
@@ -84,10 +84,10 @@ Requirements:
 
 ```bash
 tmp=$(mktemp -d)
-python3 cmd/resolver/main.py --manifest manifests/qwen3-1.7b.manifest.json \
+python3 modules/inference/resolver/main.py --manifest modules/inference/manifests/qwen3-1.7b.manifest.json \
   --lockfile-out $tmp/lock.json --resolve-hf
-python3 cmd/builder/main.py --lockfile $tmp/lock.json --lockfile-out $tmp/built.json
-python3 cmd/runner/main.py --manifest manifests/qwen3-1.7b.manifest.json \
+python3 modules/build/builder/main.py --lockfile $tmp/lock.json --lockfile-out $tmp/built.json
+python3 modules/inference/runner/main.py --manifest modules/inference/manifests/qwen3-1.7b.manifest.json \
   --lockfile $tmp/built.json --out-dir $tmp/run
 # Produces a run bundle with tokens, logits, and deterministic network frames
 ```
@@ -137,14 +137,14 @@ that composes them.
 | [inference](modules/inference/) | Bitwise-deterministic vLLM (the c3 config) | `modules/inference/` |
 | [network](modules/network/) | Deterministic L2 egress frames | `modules.network.egress_frames(...)` |
 | [memory](modules/memory/) | PoSE memory wipe + erasure attestation | `modules/memory/` |
-| [attestation](modules/attestation/) | Matmul / token / replay verification | `cmd/verifier`, `pkg/freivalds` |
-| [utils](modules/utils/) | Provisioning, replay server, helpers | `deploy/`, `scripts/lambda_cli.py` |
+| [attestation](modules/attestation/) | Matmul / token / replay verification | `modules/attestation/verifier`, `modules/attestation/freivalds` |
+| [utils](modules/utils/) | Provisioning, replay server, helpers | `deploy/`, `scripts/lambda/lambda_cli.py` |
 
 Compose them in a few lines via [`modules.Pipeline`](modules/pipeline.py):
 
 ```python
 from modules import Pipeline
-report = (Pipeline.from_manifest("manifests/qwen3-1.7b.manifest.json")
+report = (Pipeline.from_manifest("modules/inference/manifests/qwen3-1.7b.manifest.json")
           .resolve().build().run("/tmp/a").run("/tmp/b").verify())
 assert report["status"] == "conformant"
 ```
@@ -154,25 +154,29 @@ See the [capability map](modules/README.md) and the
 
 ## Repository Structure
 
+Organized **by function** — each capability physically owns its code:
+
 ```
-modules/          Capability layer (build, inference, network, memory, attestation, utils) + Pipeline
-workflows/        Recipe book — runnable compositions of the modules
-cmd/
-  server/         Proxy server with POST/GET /manifest endpoint
-  resolver/       Manifest + HF resolution -> lockfile
-  builder/        Lockfile -> lockfile with runtime_closure_digest
-  runner/         Manifest + lockfile -> run bundle (synthetic or vLLM)
-  capture/        Server capture log -> run bundle
-  verifier/       Compare two run bundles -> conformance report
-pkg/
-  manifest/       Pydantic manifest model (typed validation)
-  common/         Canonical JSON, SHA256, schema validation, HF resolution
-  networkdet/     Deterministic L2 frame construction (sim TCP/IP stack)
-  hardware/       GPU probing and conformance
-schemas/          JSON Schema contracts (manifest, lockfile, run_bundle, verify_report)
-manifests/        Model-specific manifests (Qwen3-1.7B)
-experiments/      Experiments product code/gates/demos depend on (research-only ones live on the `experiments` branch)
-docs/             Architecture diagrams, field reports, memos
+modules/                Capability layer — each module owns its code, plus shared core/ + Pipeline
+  build/                Hermetic runtime: builder/ + lockfiles/   (flake.nix, nix/ live at root for Nix)
+  inference/            Deterministic vLLM — the c3 config
+    server/             Proxy server with POST/GET /manifest endpoint
+    resolver/           Manifest + HF resolution -> lockfile
+    runner/             Manifest + lockfile -> run bundle (synthetic or vLLM)
+    capture/            Server capture log -> run bundle
+    manifest/           Pydantic manifest model (typed validation)
+    manifests/          Model manifests (Qwen3, Mistral-Large2, DBRX, Llama4-Scout, ... + multinode)
+  network/              networkdet/ (sim TCP/IP frame construction) + native/libnetdet/ (DPDK transmit)
+  attestation/          freivalds/, e2e/, proverdet/ + verifier/ (+ verifier_cli/server) + prover/
+  memory/               PoSE memory-wipe facade (over experiments/memory_wipe)
+  utils/                Provisioning / replay helpers (re-exports core/common)
+  core/                 Shared: common/ (canonical JSON, SHA256, schema validation, HF resolution)
+                        + schemas/ (JSON Schema contracts: manifest, lockfile, run_bundle, verify_report, attestation/replay)
+workflows/              Recipe book — runnable compositions of the modules
+experiments/            Experiments product code/gates/demos depend on (research-only ones live on the `experiments` branch)
+deploy/                 Lambda / vast / warden provisioning (utils-owned; kept at root for path-depth)
+docs/                   Architecture diagrams, field reports, memos, plans
+flake.nix, nix/         Hermetic build (must live at repo root for Nix)
 ```
 
 ## Container image (out of date)

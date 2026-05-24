@@ -6,9 +6,9 @@ from hypothesis import given
 from hypothesis import strategies as st
 from pydantic import ValidationError as PydanticValidationError
 
-from pkg.common.contracts import validate_with_schema
-from pkg.common.deterministic import canonical_json_bytes
-from pkg.proverdet.wire import (
+from modules.core.common.contracts import validate_with_schema
+from modules.core.common.deterministic import canonical_json_bytes
+from modules.attestation.proverdet.wire import (
     Artifact,
     ArtifactTarget,
     ErasureEvidence,

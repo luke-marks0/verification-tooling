@@ -5,11 +5,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pkg.freivalds.backends.stdlib import StdlibBackend
-from pkg.proverdet.attestation_store import AttestationStore
-from pkg.proverdet.replay import produce_evidence
-from pkg.proverdet.replay_verify import VerdictResult, verify_evidence
-from pkg.proverdet.wire import (
+from modules.attestation.freivalds.backends.stdlib import StdlibBackend
+from modules.attestation.proverdet.attestation_store import AttestationStore
+from modules.attestation.proverdet.replay import produce_evidence
+from modules.attestation.proverdet.replay_verify import VerdictResult, verify_evidence
+from modules.attestation.proverdet.wire import (
     ErasureSpec,
     ProofOfWorkSpec,
     ReplayEvidence,

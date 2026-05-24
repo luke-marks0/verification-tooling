@@ -91,13 +91,13 @@ def _run_pipeline(manifest: str, out_dir: Path) -> Path:
     lock_built = out_dir / "built.lock.json"
     run_dir = out_dir / "run"
 
-    run_cmd(["python3", "cmd/resolver/main.py",
+    run_cmd(["python3", "modules/inference/resolver/main.py",
              "--manifest", str(manifest),
              "--lockfile-out", str(lock_resolved)])
-    run_cmd(["python3", "cmd/builder/main.py",
+    run_cmd(["python3", "modules/build/builder/main.py",
              "--lockfile", str(lock_resolved),
              "--lockfile-out", str(lock_built)])
-    run_cmd(["python3", "cmd/runner/main.py",
+    run_cmd(["python3", "modules/inference/runner/main.py",
              "--manifest", str(manifest),
              "--lockfile", str(lock_built),
              "--out-dir", str(run_dir),
@@ -174,12 +174,12 @@ class TestD4BatchOrderInvariance(unittest.TestCase):
 
     def test_dense_batch_order_invariance(self) -> None:
         self._run_invariance_test(
-            "manifests/qwen2.5-32b-tp4.manifest.json", "qwen2.5-32b-dense"
+            "modules/inference/manifests/qwen2.5-32b-tp4.manifest.json", "qwen2.5-32b-dense"
         )
 
     def test_moe_batch_order_invariance(self) -> None:
         self._run_invariance_test(
-            "manifests/qwen3-30b-moe-tp4.manifest.json", "qwen3-30b-moe"
+            "modules/inference/manifests/qwen3-30b-moe-tp4.manifest.json", "qwen3-30b-moe"
         )
 
 

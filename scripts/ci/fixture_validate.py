@@ -10,9 +10,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pkg.common.jsonschema_compat import DefaultValidator
+from modules.core.common.jsonschema_compat import DefaultValidator
 
-SCHEMA_DIR = Path("schemas")
+SCHEMA_DIR = Path("modules/core/schemas")
 POS_DIR = Path("tests/fixtures/positive")
 NEG_DIR = Path("tests/fixtures/negative")
 POS_NAME_RE = re.compile(r"^(?P<schema>[a-z_]+\.v\d+)\.example\.json$")

@@ -29,7 +29,7 @@ class _VerifierFixture(unittest.TestCase):
         self.proc = subprocess.Popen(
             [
                 sys.executable,
-                "cmd/verifier_server/main.py",
+                "modules/attestation/verifier_server/main.py",
                 "--host",
                 "127.0.0.1",
                 "--port",

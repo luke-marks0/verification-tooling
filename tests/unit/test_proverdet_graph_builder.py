@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import unittest
 
-from pkg.common.contracts import validate_with_schema
-from pkg.proverdet.graph_builder import build_empty_graph
-from pkg.proverdet.wire import Graph
+from modules.core.common.contracts import validate_with_schema
+from modules.attestation.proverdet.graph_builder import build_empty_graph
+from modules.attestation.proverdet.wire import Graph
 
 
 class TestBuildEmptyGraph(unittest.TestCase):

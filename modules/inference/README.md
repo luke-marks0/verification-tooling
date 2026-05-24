@@ -28,9 +28,9 @@ assert report["status"] == "conformant"
 
 **Modes / requirements.**
 - `synthetic` — no GPU; deterministic stub observables (CI, local dev).
-- `vllm` — real inference; needs a GPU + vLLM. Serve long-running via `cmd/server`.
+- `vllm` — real inference; needs a GPU + vLLM. Serve long-running via `modules/inference/server`.
 
 **Example.** `workflows/deterministic_inference_server.py`.
 
-**Underlying code.** `cmd/runner` (batch runner), `cmd/server` (HTTP serving),
-`pkg/manifest` (config model).
+**Underlying code.** `cmd/runner` (batch runner), `modules/inference/server` (HTTP serving),
+`modules/inference/manifest` (config model).

@@ -8,14 +8,14 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# Insert repo root so pkg.manifest is importable.
+# Insert repo root so modules.inference.manifest is importable.
 import sys
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from pydantic import ValidationError as PydanticValidationError
 
-from pkg.manifest.model import (
+from modules.inference.manifest.model import (
     ArtifactInput,
     ArtifactType,
     Comparator,
@@ -30,7 +30,7 @@ def _load_json(relpath: str) -> dict:
     return json.loads((REPO_ROOT / relpath).read_text(encoding="utf-8"))
 
 
-REAL_MANIFEST = _load_json("manifests/qwen3-1.7b.manifest.json")
+REAL_MANIFEST = _load_json("modules/inference/manifests/qwen3-1.7b.manifest.json")
 POSITIVE_FIXTURE = _load_json("tests/fixtures/positive/manifest.v1.example.json")
 
 

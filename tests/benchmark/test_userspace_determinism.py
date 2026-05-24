@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from pkg.networkdet.userspace_tcp_server import UserspaceServer, RESPONSES
+from modules.network.networkdet.userspace_tcp_server import UserspaceServer, RESPONSES
 
 
 def mask_frame(f: bytes, server_port: int) -> bytes:

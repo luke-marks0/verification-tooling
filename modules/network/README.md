@@ -25,10 +25,10 @@ and a capture digest (recorded in `run_bundle.v1.observables.network_egress`).
 
 **Backends / requirements.**
 - `sim` — pure Python, no hardware. Used in CI and tests. ✅ mature
-- `dpdk` — real NIC via `native/libnetdet`; needs DPDK 24.11 + a supported NIC. ⚠️ rough
+- `dpdk` — real NIC via `modules/network/native/libnetdet`; needs DPDK 24.11 + a supported NIC. ⚠️ rough
 
 **Example.** See `workflows/deterministic_inference_server.py` (proves the same
 payload yields identical frames across two calls).
 
-**Underlying code.** `pkg/networkdet/` (frame/tcp/ip/ethernet/capture/warden),
-`native/libnetdet/` (DPDK C lib). This module re-exports `pkg.networkdet`.
+**Underlying code.** `modules/network/networkdet/` (frame/tcp/ip/ethernet/capture/warden),
+`modules/network/native/libnetdet/` (DPDK C lib). This module re-exports `modules.network.networkdet`.

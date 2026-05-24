@@ -35,14 +35,14 @@ def _load(rel_path: str, mod_name: str) -> ModuleType:
 
 
 def resolve_manifest_to_lockfile(manifest: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
-    """manifest.v1 dict -> lockfile.v1 dict (cmd/resolver)."""
-    fn = _load("cmd/resolver/main.py", "_dss_resolver").resolve_manifest_to_lockfile
+    """manifest.v1 dict -> lockfile.v1 dict (modules/inference/resolver)."""
+    fn = _load("modules/inference/resolver/main.py", "_dss_resolver").resolve_manifest_to_lockfile
     return fn(manifest, **kwargs)
 
 
 def build_runtime(lockfile: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
-    """lockfile.v1 dict -> lockfile.v1 dict enriched with the build closure (cmd/builder)."""
-    fn = _load("cmd/builder/main.py", "_dss_builder").build_runtime
+    """lockfile.v1 dict -> lockfile.v1 dict enriched with the build closure (modules/build/builder)."""
+    fn = _load("modules/build/builder/main.py", "_dss_builder").build_runtime
     return fn(lockfile, **kwargs)
 
 
@@ -57,13 +57,13 @@ def run_inference(
     runtime_hardware: dict[str, Any] | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
-    """Run one pass -> writes ``out_dir/run_bundle.v1.json`` and returns the bundle (cmd/runner).
+    """Run one pass -> writes ``out_dir/run_bundle.v1.json`` and returns the bundle (modules/inference/runner).
 
-    Provenance/pod arguments mirror ``cmd/runner/main.py``'s ``main()`` defaults.
+    Provenance/pod arguments mirror ``modules/inference/runner/main.py``'s ``main()`` defaults.
     ``invocation_argv`` is deliberately independent of ``out_dir`` so two runs
     differing only in output directory remain bitwise-comparable.
     """
-    run = _load("cmd/runner/main.py", "_dss_runner").run
+    run = _load("modules/inference/runner/main.py", "_dss_runner").run
     return run(
         manifest,
         lockfile,
@@ -91,6 +91,6 @@ def verify_runs(
     report_out: Path,
     summary_out: Path,
 ) -> dict[str, Any]:
-    """Compare two run bundles -> verify_report.v1 dict (cmd/verifier)."""
-    verify = _load("cmd/verifier/main.py", "_dss_verifier").verify
+    """Compare two run bundles -> verify_report.v1 dict (modules/attestation/verifier)."""
+    verify = _load("modules/attestation/verifier/main.py", "_dss_verifier").verify
     return verify(Path(baseline_bundle), Path(candidate_bundle), Path(report_out), Path(summary_out))

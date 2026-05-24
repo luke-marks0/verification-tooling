@@ -119,11 +119,11 @@ run_inference() {
     local run_dir="$out_dir/run"
 
     log "  [$label] Resolving..."
-    python3 cmd/resolver/main.py --manifest "$manifest" --lockfile-out "$resolved"
+    python3 modules/inference/resolver/main.py --manifest "$manifest" --lockfile-out "$resolved"
     log "  [$label] Building..."
-    python3 cmd/builder/main.py --lockfile "$resolved" --lockfile-out "$built"
+    python3 modules/build/builder/main.py --lockfile "$resolved" --lockfile-out "$built"
     log "  [$label] Running vLLM inference (100 requests)..."
-    python3 cmd/runner/main.py --manifest "$manifest" --lockfile "$built" \
+    python3 modules/inference/runner/main.py --manifest "$manifest" --lockfile "$built" \
         --out-dir "$run_dir" --mode vllm --replica-id replica-0
     log "  [$label] Done."
 }
@@ -213,8 +213,8 @@ PYEOF
 cd "$REPO_ROOT"
 
 # Manifest paths — configurable via env vars for different GPU setups
-DENSE_MANIFEST="${DENSE_MANIFEST:-manifests/qwen2.5-32b-tp4.manifest.json}"
-MOE_MANIFEST="${MOE_MANIFEST:-manifests/qwen3-30b-moe-tp4.manifest.json}"
+DENSE_MANIFEST="${DENSE_MANIFEST:-modules/inference/manifests/qwen2.5-32b-tp4.manifest.json}"
+MOE_MANIFEST="${MOE_MANIFEST:-modules/inference/manifests/qwen3-30b-moe-tp4.manifest.json}"
 DENSE_TAG="${DENSE_TAG:-$(basename "$DENSE_MANIFEST" .manifest.json)}"
 MOE_TAG="${MOE_TAG:-$(basename "$MOE_MANIFEST" .manifest.json)}"
 

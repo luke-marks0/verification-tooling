@@ -3,7 +3,7 @@ from __future__ import annotations
 import threading
 import unittest
 
-from pkg.proverdet.attestation_store import AttestationStore
+from modules.attestation.proverdet.attestation_store import AttestationStore
 
 
 class TestAttestationStore(unittest.TestCase):

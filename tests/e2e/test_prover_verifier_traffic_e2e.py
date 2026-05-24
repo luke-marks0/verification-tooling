@@ -44,7 +44,7 @@ class TestTrafficE2E(unittest.TestCase):
         self.verifier = subprocess.Popen(
             [
                 sys.executable,
-                "cmd/verifier_server/main.py",
+                "modules/attestation/verifier_server/main.py",
                 "--host",
                 "127.0.0.1",
                 "--port",
@@ -73,7 +73,7 @@ class TestTrafficE2E(unittest.TestCase):
         self.prover = subprocess.Popen(
             [
                 sys.executable,
-                "cmd/prover/main.py",
+                "modules/attestation/prover/main.py",
                 "--host",
                 "127.0.0.1",
                 "--port",

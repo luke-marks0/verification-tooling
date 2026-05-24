@@ -5,8 +5,8 @@
 # to pip), downloads the model, resolves the lockfile, and starts the server.
 #
 # Usage:
-#   scripts/reproduce.sh manifests/qwen3-1.7b.manifest.json
-#   scripts/reproduce.sh manifests/qwen3-1.7b.manifest.json --run-tests
+#   scripts/reproduce.sh modules/inference/manifests/qwen3-1.7b.manifest.json
+#   scripts/reproduce.sh modules/inference/manifests/qwen3-1.7b.manifest.json --run-tests
 #
 # With Nix: builds the exact closure from the pinned flake ref and verifies
 #   the hash matches. This is the reproducible path.
@@ -132,7 +132,7 @@ RUN_DIR="${REPO_ROOT}/.reproduce-run"
 rm -rf "$RUN_DIR"
 mkdir -p "$RUN_DIR"
 
-$PYTHON "${REPO_ROOT}/cmd/resolver/main.py" \
+$PYTHON "${REPO_ROOT}/modules/inference/resolver/main.py" \
     --manifest "${MANIFEST}" \
     --lockfile-out "$RUN_DIR/lockfile.v1.json" \
     --manifest-out "$RUN_DIR/manifest.resolved.json" \
@@ -144,7 +144,7 @@ if [ "$USE_NIX" = true ] && [ -n "$ACTUAL_HASH" ]; then
 else
     BUILDER_ARGS="$BUILDER_ARGS --builder-system equivalent"
 fi
-$PYTHON "${REPO_ROOT}/cmd/builder/main.py" $BUILDER_ARGS
+$PYTHON "${REPO_ROOT}/modules/build/builder/main.py" $BUILDER_ARGS
 
 echo "  Resolved: $RUN_DIR/manifest.resolved.json"
 echo "  Built:    $RUN_DIR/lockfile.built.v1.json"
@@ -156,7 +156,7 @@ export VLLM_BATCH_INVARIANT=1
 export CUBLAS_WORKSPACE_CONFIG=":4096:8"
 export PYTHONHASHSEED=0
 
-$PYTHON "${REPO_ROOT}/cmd/server/main.py" \
+$PYTHON "${REPO_ROOT}/modules/inference/server/main.py" \
     --manifest "$RUN_DIR/manifest.resolved.json" \
     --lockfile "$RUN_DIR/lockfile.built.v1.json" \
     --out-dir "$RUN_DIR/server" \

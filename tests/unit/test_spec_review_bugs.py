@@ -28,16 +28,16 @@ class TestBug1RunnerSyntheticMode(unittest.TestCase):
             built = tdir / "built.json"
             out = tdir / "run"
 
-            run_cmd(["python3", "cmd/resolver/main.py",
+            run_cmd(["python3", "modules/inference/resolver/main.py",
                      "--manifest", manifest_path,
                      "--lockfile-out", str(lockfile)])
-            run_cmd(["python3", "cmd/builder/main.py",
+            run_cmd(["python3", "modules/build/builder/main.py",
                      "--lockfile", str(lockfile),
                      "--lockfile-out", str(built)])
 
             import subprocess
             result = subprocess.run(
-                ["python3", "cmd/runner/main.py",
+                ["python3", "modules/inference/runner/main.py",
                  "--manifest", manifest_path,
                  "--lockfile", str(built),
                  "--out-dir", str(out)],
@@ -66,7 +66,7 @@ class TestBug3UlpComparisonWrong(unittest.TestCase):
         import sys
         # Load verifier module directly by path
         spec = importlib.util.spec_from_file_location(
-            "verifier_main", "cmd/verifier/main.py",
+            "verifier_main", "modules/attestation/verifier/main.py",
             submodule_search_locations=[],
         )
         mod = importlib.util.module_from_spec(spec)
@@ -100,7 +100,7 @@ class TestBug3UlpComparisonWrong(unittest.TestCase):
         """At large magnitude, values 1 ULP apart should pass with ulp=1."""
         import importlib, sys, struct
         spec = importlib.util.spec_from_file_location(
-            "verifier_main", "cmd/verifier/main.py",
+            "verifier_main", "modules/attestation/verifier/main.py",
             submodule_search_locations=[],
         )
         mod = importlib.util.module_from_spec(spec)
@@ -144,7 +144,7 @@ class TestBug4RelativeSchemaPath(unittest.TestCase):
     """Bug #4: SCHEMA_DIR uses relative path, breaks when cwd != repo root."""
 
     def test_schema_validation_from_different_cwd(self) -> None:
-        from pkg.common.contracts import validate_with_schema
+        from modules.core.common.contracts import validate_with_schema
 
         manifest = read_json(Path("tests/fixtures/positive/manifest.v1.example.json"))
 
@@ -168,7 +168,7 @@ class TestBug4RelativeSchemaPath(unittest.TestCase):
 
 
 class TestBug5OciImageCmd(unittest.TestCase):
-    """Bug #5: nix/images/runtime-image.nix hardcodes /app/cmd/server/main.py
+    """Bug #5: nix/images/runtime-image.nix hardcodes /app/modules/inference/server/main.py
     but the flake puts code under /nix/store/...-deterministic-serving-stack/.
 
     We can't test the actual Nix build here, but we can verify the paths

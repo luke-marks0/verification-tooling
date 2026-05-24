@@ -4,11 +4,11 @@ from __future__ import annotations
 import struct
 import unittest
 
-from pkg.networkdet.capture import CaptureRing
-from pkg.networkdet.config import NetStackConfig
-from pkg.networkdet.ethernet import ETHERNET_HEADER_LEN, ETHERTYPE_IPV4
-from pkg.networkdet.frame import DeterministicFrameBuilder
-from pkg.networkdet.ip import IPV4_HEADER_LEN
+from modules.network.networkdet.capture import CaptureRing
+from modules.network.networkdet.config import NetStackConfig
+from modules.network.networkdet.ethernet import ETHERNET_HEADER_LEN, ETHERTYPE_IPV4
+from modules.network.networkdet.frame import DeterministicFrameBuilder
+from modules.network.networkdet.ip import IPV4_HEADER_LEN
 
 
 def _test_config() -> NetStackConfig:

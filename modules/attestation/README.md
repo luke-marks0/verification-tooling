@@ -9,14 +9,14 @@ training/exfiltration in an inference workload).
 
 ```bash
 # Compare two run bundles -> verify_report.v1
-python3 cmd/verifier/main.py --baseline a/run_bundle.v1.json \
+python3 modules/attestation/verifier/main.py --baseline a/run_bundle.v1.json \
     --candidate b/run_bundle.v1.json --report-out report.json --summary-out summary.txt
 ```
 
 ```python
-from pkg.freivalds import execute_challenge, verify_response   # matmul attestation
-from pkg.e2e import commit_token, commit_token_stream          # token commitments
-from pkg.proverdet.verdict import replay_correctness, compute_budget, bandwidth_signal
+from modules.attestation.freivalds import execute_challenge, verify_response   # matmul attestation
+from modules.attestation.e2e import commit_token, commit_token_stream          # token commitments
+from modules.attestation.proverdet.verdict import replay_correctness, compute_budget, bandwidth_signal
 ```
 
 **Artifacts.** Consumes `run_bundle.v1`; produces `verify_report.v1`,
@@ -25,8 +25,8 @@ from pkg.proverdet.verdict import replay_correctness, compute_budget, bandwidth_
 **Requirements.** CPU-only for verification (Freivalds is O(n²)); the prover side
 runs on the serving GPU.
 
-**Underlying code.** `pkg/freivalds`, `pkg/e2e`, `pkg/proverdet`, `cmd/verifier`,
-`cmd/prover`, `cmd/verifier_{cli,server}`. The prover-verifier-demo composes these
+**Underlying code.** `modules/attestation/freivalds`, `modules/attestation/e2e`, `modules/attestation/proverdet`, `modules/attestation/verifier`,
+`cmd/prover`, `modules/attestation/verifier_{cli,server}`. The prover-verifier-demo composes these
 end-to-end (`experiments/prover-verifier-demo/`).
 
 **Status.** Mature. Facade in `modules/attestation/api.py`: `attest_matmuls()`

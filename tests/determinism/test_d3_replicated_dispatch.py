@@ -16,8 +16,8 @@ class TestD3ReplicatedDispatch(unittest.TestCase):
             out2 = tdir / "dispatch2.json"
             replicas = "replica-0,replica-1,replica-2,replica-3"
 
-            run_cmd(["python3", "cmd/runner/dispatcher.py", "--manifest", manifest, "--replicas", replicas, "--out", str(out1)])
-            run_cmd(["python3", "cmd/runner/dispatcher.py", "--manifest", manifest, "--replicas", replicas, "--out", str(out2)])
+            run_cmd(["python3", "modules/inference/runner/dispatcher.py", "--manifest", manifest, "--replicas", replicas, "--out", str(out1)])
+            run_cmd(["python3", "modules/inference/runner/dispatcher.py", "--manifest", manifest, "--replicas", replicas, "--out", str(out2)])
 
             self.assertEqual(out1.read_bytes(), out2.read_bytes())
             mapping = read_json(out1)

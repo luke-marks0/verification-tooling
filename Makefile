@@ -27,13 +27,13 @@ ci-nightly: lint schema test-nightly
 ci-release: lint schema test-release
 
 build-libnetdet:
-	cd native/libnetdet && make
+	cd modules/network/native/libnetdet && make
 
 # Scoped tooling for the prover-verifier demo (experiments/prover-verifier-demo).
 # Keeps the existing tree's looser conventions intact while letting the new code
 # sit under stricter ruff + pyright. Edit ruff.toml / pyrightconfig.json under
 # experiments/prover-verifier-demo/ to tune.
-PROVERDET_PATHS := pkg/proverdet cmd/prover cmd/verifier_server cmd/verifier_cli
+PROVERDET_PATHS := modules/attestation/proverdet modules/attestation/prover modules/attestation/verifier_server modules/attestation/verifier_cli
 
 lint-proverdet:
 	bash scripts/ci/run_proverdet_lint.sh

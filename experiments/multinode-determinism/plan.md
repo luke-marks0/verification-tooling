@@ -52,10 +52,10 @@ Production LLM deployments serving models larger than a single GPU's memory (70B
 
 ### Code changes already merged (on `multi-gpu-determinism` branch)
 
-1. **`cmd/runner/vllm_runner.py`** — Multi-node NCCL env vars (`NCCL_NET=Socket`, `NCCL_P2P_DISABLE=1`, `NCCL_SHM_DISABLE=1`, `NCCL_BUFFSIZE=8388608`) when `pp_size > 1` or `VLLM_MULTI_NODE` is set. Passes `distributed_executor_backend` to vLLM `LLM()` constructor.
+1. **`modules/inference/runner/vllm_runner.py`** — Multi-node NCCL env vars (`NCCL_NET=Socket`, `NCCL_P2P_DISABLE=1`, `NCCL_SHM_DISABLE=1`, `NCCL_BUFFSIZE=8388608`) when `pp_size > 1` or `VLLM_MULTI_NODE` is set. Passes `distributed_executor_backend` to vLLM `LLM()` constructor.
 2. **`pkg/manifest/model.py`** — Added `distributed_executor_backend: str | None = None` to `ServingEngine`.
 3. **`schemas/manifest.v1.schema.json`** — Added `"distributed_executor_backend": {"enum": ["ray", "mp"], "type": "string"}` to serving_engine properties.
-4. **`cmd/server/main.py`** — Added `--distributed-executor-backend` CLI flag passthrough.
+4. **`modules/inference/server/main.py`** — Added `--distributed-executor-backend` CLI flag passthrough.
 5. **`manifests/qwen3-30b-moe-pp4-multinode.manifest.json`** — PP=4, Ray backend, H100 hardware profile, batch invariance enabled.
 6. **`manifests/qwen3-30b-moe-tp4-multinode.manifest.json`** — TP=4, Ray backend, H100, batch invariance enabled.
 7. **`deploy/vast/grab_cluster.sh`** — Interactive script to provision 4 vast.ai nodes.
@@ -174,11 +174,11 @@ Or run tests individually:
 Run the same 100 requests twice with identical config. Compare by request ID.
 ```bash
 # Run A
-python3 cmd/runner/main.py --manifest manifests/qwen3-30b-moe-pp4-multinode.manifest.json \
+python3 modules/inference/runner/main.py --manifest manifests/qwen3-30b-moe-pp4-multinode.manifest.json \
   --lockfile lockfiles/qwen3-30b-moe.lockfile.json --out-dir /tmp/d6/pp4-run-a --mode vllm --replica-id replica-0
 
 # Run A' (identical)
-python3 cmd/runner/main.py --manifest manifests/qwen3-30b-moe-pp4-multinode.manifest.json \
+python3 modules/inference/runner/main.py --manifest manifests/qwen3-30b-moe-pp4-multinode.manifest.json \
   --lockfile lockfiles/qwen3-30b-moe.lockfile.json --out-dir /tmp/d6/pp4-run-a-prime --mode vllm --replica-id replica-0
 
 # Compare
@@ -334,9 +334,9 @@ NCCL_SOCKET_IFNAME = eth0
 
 | File | Purpose |
 |------|---------|
-| `cmd/runner/vllm_runner.py` | Offline vLLM inference backend with multi-node NCCL support |
-| `cmd/runner/main.py` | Runner entry point |
-| `cmd/server/main.py` | vLLM server CLI with `--distributed-executor-backend` |
+| `modules/inference/runner/vllm_runner.py` | Offline vLLM inference backend with multi-node NCCL support |
+| `modules/inference/runner/main.py` | Runner entry point |
+| `modules/inference/server/main.py` | vLLM server CLI with `--distributed-executor-backend` |
 | `pkg/manifest/model.py` | Pydantic manifest models (ServingEngine has `distributed_executor_backend`) |
 | `schemas/manifest.v1.schema.json` | JSON Schema for manifest validation |
 | `manifests/qwen3-30b-moe-pp4-multinode.manifest.json` | PP=4 multi-node manifest |

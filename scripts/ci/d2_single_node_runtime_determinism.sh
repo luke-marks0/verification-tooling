@@ -17,11 +17,11 @@ RUNTIME_HW="$TMP_DIR/runtime.hardware.json"
 REPORT="$TMP_DIR/verify_report.json"
 SUMMARY="$TMP_DIR/verify_summary.txt"
 
-python3 cmd/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
-python3 cmd/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT"
-python3 cmd/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN_A" --replica-id replica-0
-python3 cmd/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN_B" --replica-id replica-0
-python3 cmd/verifier/main.py --baseline "$RUN_A/run_bundle.v1.json" --candidate "$RUN_B/run_bundle.v1.json" --report-out "$REPORT" --summary-out "$SUMMARY"
+python3 modules/inference/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
+python3 modules/build/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT"
+python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN_A" --replica-id replica-0
+python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN_B" --replica-id replica-0
+python3 modules/attestation/verifier/main.py --baseline "$RUN_A/run_bundle.v1.json" --candidate "$RUN_B/run_bundle.v1.json" --report-out "$REPORT" --summary-out "$SUMMARY"
 
 python3 - << 'PY' "$REPORT"
 import json
@@ -50,14 +50,14 @@ observed["gpu"]["model"] = "H100-PCIe-80GB"
 Path(sys.argv[3]).write_text(json.dumps(observed, sort_keys=True, separators=(",", ":"), ensure_ascii=True) + "\n", encoding="utf-8")
 PY
 
-if python3 cmd/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$TMP_DIR/run-strict-bad" --runtime-hardware "$RUNTIME_HW"; then
+if python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$TMP_DIR/run-strict-bad" --runtime-hardware "$RUNTIME_HW"; then
   echo "Expected strict_hardware=true run to fail on non-conforming hardware" >&2
   exit 1
 fi
 
-python3 cmd/resolver/main.py --manifest "$NONSTRICT_MANIFEST" --lockfile-out "$TMP_DIR/resolved.nonstrict.lock.json"
-python3 cmd/builder/main.py --lockfile "$TMP_DIR/resolved.nonstrict.lock.json" --lockfile-out "$TMP_DIR/built.nonstrict.lock.json"
-python3 cmd/runner/main.py --manifest "$NONSTRICT_MANIFEST" --lockfile "$TMP_DIR/built.nonstrict.lock.json" --out-dir "$RUN_C" --runtime-hardware "$RUNTIME_HW"
+python3 modules/inference/resolver/main.py --manifest "$NONSTRICT_MANIFEST" --lockfile-out "$TMP_DIR/resolved.nonstrict.lock.json"
+python3 modules/build/builder/main.py --lockfile "$TMP_DIR/resolved.nonstrict.lock.json" --lockfile-out "$TMP_DIR/built.nonstrict.lock.json"
+python3 modules/inference/runner/main.py --manifest "$NONSTRICT_MANIFEST" --lockfile "$TMP_DIR/built.nonstrict.lock.json" --out-dir "$RUN_C" --runtime-hardware "$RUNTIME_HW"
 
 python3 - << 'PY' "$RUN_C/run_bundle.v1.json"
 import json

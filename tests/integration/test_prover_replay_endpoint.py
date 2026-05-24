@@ -8,7 +8,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from pkg.common.contracts import validate_with_schema
+from modules.core.common.contracts import validate_with_schema
 from tests.proverdet._helpers import (
     REPO_ROOT,
     http_post_json,
@@ -29,7 +29,7 @@ class _ProverFixture(unittest.TestCase):
         self.proc = subprocess.Popen(
             [
                 sys.executable,
-                "cmd/prover/main.py",
+                "modules/attestation/prover/main.py",
                 "--host",
                 "127.0.0.1",
                 "--port",

@@ -1,4 +1,4 @@
-"""Unit tests for pkg.e2e.extract."""
+"""Unit tests for modules.attestation.e2e.extract."""
 from __future__ import annotations
 
 import sys
@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pkg.e2e.extract import (
+from modules.attestation.e2e.extract import (
     TokenIdExtractionError,
     extract_input_token_ids,
     extract_output_token_ids,

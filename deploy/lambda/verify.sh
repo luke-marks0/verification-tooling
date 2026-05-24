@@ -148,7 +148,7 @@ echo ""
 echo "--- Converting captures to run bundles ---"
 
 BUNDLE_A="${VERIFY_DIR}/bundle-a"
-python3 "${REPO_ROOT}/cmd/capture/main.py" \
+python3 "${REPO_ROOT}/modules/inference/capture/main.py" \
     --server-dir "$SESSION_A_DIR" \
     --manifest "$MANIFEST" \
     --lockfile "$LOCKFILE" \
@@ -157,7 +157,7 @@ python3 "${REPO_ROOT}/cmd/capture/main.py" \
 echo "  Bundle A: $BUNDLE_A/run_bundle.v1.json"
 
 BUNDLE_B="${VERIFY_DIR}/bundle-b"
-python3 "${REPO_ROOT}/cmd/capture/main.py" \
+python3 "${REPO_ROOT}/modules/inference/capture/main.py" \
     --server-dir "$SESSION_B_DIR" \
     --manifest "$MANIFEST" \
     --lockfile "$LOCKFILE" \
@@ -172,7 +172,7 @@ echo "--- Running verifier ---"
 REPORT="${VERIFY_DIR}/verify_report.json"
 SUMMARY="${VERIFY_DIR}/verify_summary.txt"
 
-python3 "${REPO_ROOT}/cmd/verifier/main.py" \
+python3 "${REPO_ROOT}/modules/attestation/verifier/main.py" \
     --baseline "$BUNDLE_A/run_bundle.v1.json" \
     --candidate "$BUNDLE_B/run_bundle.v1.json" \
     --report-out "$REPORT" \

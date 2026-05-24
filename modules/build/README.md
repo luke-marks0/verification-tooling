@@ -10,7 +10,7 @@ digest is the build's identity, recorded in the lockfile and attested at boot.
 ```bash
 nix build .#oci       # OCI image tarball (sshd + Python + vLLM + app); docker load < result
 nix build .#closure   # hermetic runtime closure (symlink join)
-nix build .#app       # app source tree (cmd/, pkg/, schemas/, manifests/)
+nix build .#app       # app source tree (modules/, workflows/)
 ```
 
 In-pipeline (records the closure into the lockfile):
@@ -29,7 +29,7 @@ the Nix store. The OCI image pre-sets `VLLM_BATCH_INVARIANT=1`,
 `CUBLAS_WORKSPACE_CONFIG=:4096:8`, `PYTHONHASHSEED=0`.
 
 **Underlying code.** `lockfiles/` (co-located in this module), `flake.nix`,
-`nix/`, `cmd/builder/main.py`. (`flake.nix`/`nix/` stay at the repo root — Nix
+`nix/`, `modules/build/builder/main.py`. (`flake.nix`/`nix/` stay at the repo root — Nix
 requires the flake at the root.)
 
 **Status.** Production-grade. Python facade in `modules/build/api.py`:

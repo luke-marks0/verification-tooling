@@ -11,9 +11,9 @@ RESOLVED="$TMP_DIR/resolved.lock.json"
 BUILT1="$TMP_DIR/built1.lock.json"
 BUILT2="$TMP_DIR/built2.lock.json"
 
-python3 cmd/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
-python3 cmd/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT1"
-python3 cmd/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT2"
+python3 modules/inference/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
+python3 modules/build/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT1"
+python3 modules/build/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT2"
 
 python3 - << 'PY' "$BUILT1" "$BUILT2"
 import json

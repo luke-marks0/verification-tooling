@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import unittest
 
-from pkg.freivalds import (
+from modules.attestation.freivalds import (
     ChainHashChunk,
     Challenge,
     ComparisonMode,
@@ -20,7 +20,7 @@ from pkg.freivalds import (
     fold_chain_hash,
     verify_streaming_response,
 )
-from pkg.freivalds.backends.stdlib import StdlibBackend
+from modules.attestation.freivalds.backends.stdlib import StdlibBackend
 
 
 def _make_challenge(n_matmuls: int, matmuls_per_response: int | None = None) -> Challenge:
@@ -45,7 +45,7 @@ class TestChainHashFold(unittest.TestCase):
     def test_genesis_distinct_from_matrix_digest(self) -> None:
         # The genesis tag must not collide with anything matrix_digest can
         # produce — different domain-separation prefix.
-        from pkg.freivalds import prng
+        from modules.attestation.freivalds import prng
         for seed in range(8):
             self.assertNotEqual(GENESIS_CHAIN_HASH,
                                 prng.matrix_digest(seed.to_bytes(8, "little")))

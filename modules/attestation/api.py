@@ -1,16 +1,16 @@
 """Correctness & integrity attestation — stable public API. See ``README.md``.
 
 Three primitives, re-exported as the curated surface:
-  * matmul attestation via Freivalds' algorithm (``pkg.freivalds``)
-  * token-level commitments (``pkg.e2e``)
+  * matmul attestation via Freivalds' algorithm (``modules.attestation.freivalds``)
+  * token-level commitments (``modules.attestation.e2e``)
   * run-bundle comparison / verdict (``cmd.verifier`` via ``modules._cmd``)
 """
 from __future__ import annotations
 
 from typing import Any
 
-from pkg.e2e import commit_token, commit_token_stream
-from pkg.freivalds import (
+from modules.attestation.e2e import commit_token, commit_token_stream
+from modules.attestation.freivalds import (
     AttestationReport,
     Challenge,
     ComparisonMode,
@@ -50,7 +50,7 @@ def attest_matmuls(challenge: Challenge, backend: Any | None = None) -> Attestat
     the :class:`AttestationReport` (``.overall_passed`` is the verdict).
     """
     if backend is None:
-        from pkg.freivalds.backends.stdlib import StdlibBackend
+        from modules.attestation.freivalds.backends.stdlib import StdlibBackend
 
         backend = StdlibBackend()
     response = execute_challenge(challenge, backend)

@@ -15,8 +15,8 @@ class TestD0ManifestToLockfile(unittest.TestCase):
             lock1 = tdir / "lock1.json"
             lock2 = tdir / "lock2.json"
 
-            run_cmd(["python3", "cmd/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(lock1)])
-            run_cmd(["python3", "cmd/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(lock2)])
+            run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(lock1)])
+            run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(lock2)])
 
             self.assertEqual(lock1.read_bytes(), lock2.read_bytes())
             lock_data = read_json(lock1)

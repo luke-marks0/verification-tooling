@@ -11,7 +11,7 @@ fi
 
 # If none of the include paths exist yet, exit 0 (nothing to type-check).
 HAS_TARGET=0
-for p in pkg/proverdet cmd/prover cmd/verifier_server cmd/verifier_cli; do
+for p in modules/attestation/proverdet modules/attestation/prover modules/attestation/verifier_server modules/attestation/verifier_cli; do
     if [ -e "$p" ]; then
         HAS_TARGET=1
         break
@@ -26,7 +26,7 @@ fi
 # when a configured include directory does not exist, so we only pass the
 # ones that exist on disk. If none exist, exit 0 (handled above).
 INCLUDES=()
-for p in pkg/proverdet cmd/prover cmd/verifier_server cmd/verifier_cli; do
+for p in modules/attestation/proverdet modules/attestation/prover modules/attestation/verifier_server modules/attestation/verifier_cli; do
     if [ -e "$p" ]; then
         INCLUDES+=("$p")
     fi

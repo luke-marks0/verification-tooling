@@ -22,7 +22,7 @@ SERVER_URL = os.getenv("SERVER_URL", "http://localhost:8000")
 
 
 def _load_manifest() -> dict:
-    path = REPO_ROOT / "manifests" / "qwen3-1.7b.manifest.json"
+    path = REPO_ROOT / "modules" / "inference" / "manifests" / "qwen3-1.7b.manifest.json"
     return json.loads(path.read_text(encoding="utf-8"))
 
 

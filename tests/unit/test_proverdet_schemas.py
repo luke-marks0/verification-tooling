@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pkg.common.contracts import ValidationError, validate_with_schema
+from modules.core.common.contracts import ValidationError, validate_with_schema
 
 GRAPH_SCHEMA = "prover_graph.v1.schema.json"
 REPLAY_REQUEST_SCHEMA = "replay_request.v1.schema.json"

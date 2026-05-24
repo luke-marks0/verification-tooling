@@ -160,12 +160,12 @@ and verifier are already running on whatever hosts you point it at:
 
 ```bash
 # On the prover host (e.g. Lambda gpu_1x_h100):
-python3 cmd/prover/main.py --host 0.0.0.0 --port 8000 \
+python3 modules/attestation/prover/main.py --host 0.0.0.0 --port 8000 \
     --run-id prod-001 --out-dir /tmp/prover \
     --verifier-url http://10.0.0.2:9000
 
 # On the verifier host:
-python3 cmd/verifier_server/main.py --host 0.0.0.0 --port 9000 \
+python3 modules/attestation/verifier_server/main.py --host 0.0.0.0 --port 9000 \
     --out-dir /tmp/verifier \
     --prover-base-url http://10.0.0.1:8000
 

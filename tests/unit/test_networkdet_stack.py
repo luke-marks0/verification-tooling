@@ -4,12 +4,12 @@ from __future__ import annotations
 import struct
 import unittest
 
-from pkg.networkdet import DeterministicNetStack, create_net_stack
-from pkg.networkdet.backend_sim import SimulatedBackend
-from pkg.networkdet.config import NetStackConfig
+from modules.network.networkdet import DeterministicNetStack, create_net_stack
+from modules.network.networkdet.backend_sim import SimulatedBackend
+from modules.network.networkdet.config import NetStackConfig
 
 try:
-    from pkg.networkdet.warden import ActiveWarden
+    from modules.network.networkdet.warden import ActiveWarden
     HAS_WARDEN = True
 except ImportError:
     HAS_WARDEN = False

@@ -16,12 +16,12 @@ SUMMARY_OK="$TMP_DIR/verify_summary_ok.txt"
 REPORT_BAD="$TMP_DIR/verify_report_bad.json"
 SUMMARY_BAD="$TMP_DIR/verify_summary_bad.txt"
 
-python3 cmd/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
-python3 cmd/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT"
-python3 cmd/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN1" --replica-id replica-0
-python3 cmd/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN2" --replica-id replica-0
+python3 modules/inference/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
+python3 modules/build/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT"
+python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN1" --replica-id replica-0
+python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN2" --replica-id replica-0
 
-python3 cmd/verifier/main.py --baseline "$RUN1/run_bundle.v1.json" --candidate "$RUN2/run_bundle.v1.json" --report-out "$REPORT_OK" --summary-out "$SUMMARY_OK"
+python3 modules/attestation/verifier/main.py --baseline "$RUN1/run_bundle.v1.json" --candidate "$RUN2/run_bundle.v1.json" --report-out "$REPORT_OK" --summary-out "$SUMMARY_OK"
 
 python3 - << 'PY' "$REPORT_OK"
 import json
@@ -39,7 +39,7 @@ import json
 import sys
 from pathlib import Path
 
-from pkg.common.deterministic import canonical_json_text, compute_bundle_digest, sha256_prefixed
+from modules.core.common.deterministic import canonical_json_text, compute_bundle_digest, sha256_prefixed
 
 network_path = Path(sys.argv[1])
 bundle_path = Path(sys.argv[2])
@@ -60,7 +60,7 @@ bundle_path.write_text(canonical_json_text(bundle), encoding="utf-8")
 print("Mutated candidate network frame and updated bundle digests")
 PY
 
-python3 cmd/verifier/main.py --baseline "$RUN1/run_bundle.v1.json" --candidate "$RUN2/run_bundle.v1.json" --report-out "$REPORT_BAD" --summary-out "$SUMMARY_BAD"
+python3 modules/attestation/verifier/main.py --baseline "$RUN1/run_bundle.v1.json" --candidate "$RUN2/run_bundle.v1.json" --report-out "$REPORT_BAD" --summary-out "$SUMMARY_BAD"
 
 python3 - << 'PY' "$REPORT_BAD"
 import json

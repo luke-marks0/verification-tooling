@@ -6,7 +6,7 @@ import unittest
 from ctypes import c_uint8
 from unittest.mock import MagicMock, patch
 
-from pkg.networkdet.libnetdet_ffi import LibNetDet, TxResult, _find_library
+from modules.network.networkdet.libnetdet_ffi import LibNetDet, TxResult, _find_library
 
 
 class TestFindLibrary(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestLibNetDetInit(unittest.TestCase):
         mock_lib = MagicMock()
         mock_lib.netdet_init.return_value = None  # NULL
 
-        with patch("pkg.networkdet.libnetdet_ffi.ctypes.CDLL", return_value=mock_lib):
+        with patch("modules.network.networkdet.libnetdet_ffi.ctypes.CDLL", return_value=mock_lib):
             lib = LibNetDet.__new__(LibNetDet)
             lib._lib = mock_lib
 

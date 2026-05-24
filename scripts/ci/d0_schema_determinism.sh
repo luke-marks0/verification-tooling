@@ -10,8 +10,8 @@ MANIFEST="tests/fixtures/positive/manifest.v1.example.json"
 LOCK1="$TMP_DIR/lock1.json"
 LOCK2="$TMP_DIR/lock2.json"
 
-python3 cmd/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$LOCK1"
-python3 cmd/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$LOCK2"
+python3 modules/inference/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$LOCK1"
+python3 modules/inference/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$LOCK2"
 
 cmp -s "$LOCK1" "$LOCK2"
 python3 scripts/ci/lockfile_validate.py --lockfile "$LOCK1"

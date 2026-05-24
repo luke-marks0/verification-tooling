@@ -50,7 +50,7 @@ class TestVerdictCombiner(unittest.TestCase):
         traffic_digest: Path | None = None,
         workload_summary: Path | None = None,
     ) -> dict[str, object]:
-        from pkg.proverdet.verdict import emit_verdict
+        from modules.attestation.proverdet.verdict import emit_verdict
 
         return emit_verdict(
             self.transcript,

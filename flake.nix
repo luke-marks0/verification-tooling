@@ -325,10 +325,10 @@
           dontBuild = true;
           installPhase = ''
             mkdir -p $out
-            cp -r cmd $out/cmd
-            cp -r pkg $out/pkg
-            cp -r schemas $out/schemas
-            cp -r manifests $out/manifests 2>/dev/null || true
+            # Capability layer holds all runtime code plus schemas (modules/core/schemas)
+            # and model manifests (modules/inference/manifests).
+            cp -r modules $out/modules
+            cp -r workflows $out/workflows
             cp flake.nix $out/flake.nix
             cp flake.lock $out/flake.lock 2>/dev/null || true
           '';
@@ -399,7 +399,7 @@
           ${pkgs.openssh}/bin/sshd -f /etc/ssh/sshd_config
           echo "[entrypoint] sshd started on :22"
 
-          exec ${pythonEnv}/bin/python3 ${appSrc}/cmd/server/main.py "$@"
+          exec ${pythonEnv}/bin/python3 ${appSrc}/modules/inference/server/main.py "$@"
         '';
 
         # ── OCI image ──────────────────────────────────────────────────────

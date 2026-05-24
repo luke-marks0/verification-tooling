@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import unittest
 
-from pkg.freivalds.backends.stdlib import StdlibBackend
-from pkg.freivalds.check import freivalds_check
-from pkg.freivalds.spec import ComparisonMode, MatmulSpec, Tolerance
+from modules.attestation.freivalds.backends.stdlib import StdlibBackend
+from modules.attestation.freivalds.check import freivalds_check
+from modules.attestation.freivalds.spec import ComparisonMode, MatmulSpec, Tolerance
 
 
 def _build_spec(

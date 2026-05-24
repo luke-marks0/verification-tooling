@@ -2,16 +2,16 @@
 * @deterministic-serving/platform
 
 # Inference core
-/cmd/resolver/ @deterministic-serving/inference @deterministic-serving/platform
-/cmd/runner/ @deterministic-serving/inference @deterministic-serving/platform
-/cmd/verifier/ @deterministic-serving/inference @deterministic-serving/platform
-/pkg/ @deterministic-serving/inference @deterministic-serving/platform
+/modules/inference/resolver/ @deterministic-serving/inference @deterministic-serving/platform
+/modules/inference/runner/ @deterministic-serving/inference @deterministic-serving/platform
+/modules/attestation/verifier/ @deterministic-serving/inference @deterministic-serving/platform
+/modules/core/ @deterministic-serving/inference @deterministic-serving/platform
 
 # Conformance and CI
 /docs/conformance/ @deterministic-serving/platform @deterministic-serving/security
 /.github/workflows/ @deterministic-serving/platform
 /scripts/ci/ @deterministic-serving/platform
-/schemas/ @deterministic-serving/platform @deterministic-serving/inference
+/modules/core/schemas/ @deterministic-serving/platform @deterministic-serving/inference
 
 # Security and supply-chain
 /nix/ @deterministic-serving/security @deterministic-serving/platform

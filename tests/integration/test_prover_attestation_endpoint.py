@@ -24,7 +24,7 @@ class TestAttestationEndpoint(unittest.TestCase):
         self.proc = subprocess.Popen(
             [
                 sys.executable,
-                "cmd/prover/main.py",
+                "modules/attestation/prover/main.py",
                 "--host",
                 "127.0.0.1",
                 "--port",

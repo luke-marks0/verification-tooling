@@ -30,7 +30,7 @@ class TestD4TPDeterminism(unittest.TestCase):
         os.environ["NCCL_DEBUG"] = "WARN"
 
     def test_tp4_runner_outputs_are_reproducible(self) -> None:
-        manifest = "manifests/qwen2.5-32b-tp4.manifest.json"
+        manifest = "modules/inference/manifests/qwen2.5-32b-tp4.manifest.json"
         with tempfile.TemporaryDirectory() as td:
             tdir = Path(td)
             lock_resolved = tdir / "resolved.lock.json"
@@ -40,26 +40,26 @@ class TestD4TPDeterminism(unittest.TestCase):
             report = tdir / "verify_report.json"
             summary = tdir / "verify_summary.txt"
 
-            run_cmd(["python3", "cmd/resolver/main.py",
+            run_cmd(["python3", "modules/inference/resolver/main.py",
                      "--manifest", manifest,
                      "--lockfile-out", str(lock_resolved)])
-            run_cmd(["python3", "cmd/builder/main.py",
+            run_cmd(["python3", "modules/build/builder/main.py",
                      "--lockfile", str(lock_resolved),
                      "--lockfile-out", str(lock_built)])
-            run_cmd(["python3", "cmd/runner/main.py",
+            run_cmd(["python3", "modules/inference/runner/main.py",
                      "--manifest", manifest,
                      "--lockfile", str(lock_built),
                      "--out-dir", str(run_a),
                      "--mode", "vllm",
                      "--replica-id", "replica-0"])
-            run_cmd(["python3", "cmd/runner/main.py",
+            run_cmd(["python3", "modules/inference/runner/main.py",
                      "--manifest", manifest,
                      "--lockfile", str(lock_built),
                      "--out-dir", str(run_b),
                      "--mode", "vllm",
                      "--replica-id", "replica-0"])
             run_cmd([
-                "python3", "cmd/verifier/main.py",
+                "python3", "modules/attestation/verifier/main.py",
                 "--baseline", str(run_a / "run_bundle.v1.json"),
                 "--candidate", str(run_b / "run_bundle.v1.json"),
                 "--report-out", str(report),

@@ -3,7 +3,7 @@
 Usage:
   python3 scripts/d6/compare_observables.py <run_dir_a> <run_dir_b> [<run_dir_c> ...]
 
-A run dir is the `--out-dir` from `cmd/runner/main.py`, which contains
+A run dir is the `--out-dir` from `modules/inference/runner/main.py`, which contains
 `observables/tokens.json` (a list of {id, tokens}).
 
 Exit codes:

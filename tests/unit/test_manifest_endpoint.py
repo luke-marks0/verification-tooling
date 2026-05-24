@@ -14,12 +14,12 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pkg.common.contracts import ValidationError, validate_with_schema
-from pkg.manifest.model import Manifest
+from modules.core.common.contracts import ValidationError, validate_with_schema
+from modules.inference.manifest.model import Manifest
 
 import importlib.util
 _spec = importlib.util.spec_from_file_location(
-    "server_main", REPO_ROOT / "cmd" / "server" / "main.py"
+    "server_main", REPO_ROOT / "modules" / "inference" / "server" / "main.py"
 )
 _mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_mod)
@@ -33,7 +33,7 @@ _check_hardware = _mod._check_hardware
 
 
 def _load_manifest_dict() -> dict:
-    path = REPO_ROOT / "manifests" / "qwen3-1.7b.manifest.json"
+    path = REPO_ROOT / "modules" / "inference" / "manifests" / "qwen3-1.7b.manifest.json"
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -472,7 +472,7 @@ class TestCheckHardware(unittest.TestCase):
     """Hardware conformance check via _check_hardware (pure function, no mocking)."""
 
     def _probe(self, **overrides) -> "GpuProbe":
-        from pkg.manifest.model import GpuProbe
+        from modules.inference.manifest.model import GpuProbe
         defaults = dict(
             available=True, name="NVIDIA GH200 480GB", count=1,
             compute_capability="9.0", driver_version="570.148.08",
@@ -552,7 +552,7 @@ class TestVerifyModelArtifacts(unittest.TestCase):
 
     def _make_manifest_with_artifact(self, cache_dir, filename, content, digest=None, size=None):
         """Create a manifest with a single model_weights artifact pointing at a temp file."""
-        from pkg.common.deterministic import sha256_file as _sha256_file
+        from modules.core.common.deterministic import sha256_file as _sha256_file
         fpath = cache_dir / filename
         fpath.write_bytes(content)
         actual_digest = _sha256_file(fpath)

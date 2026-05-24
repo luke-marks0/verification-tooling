@@ -19,13 +19,13 @@ class TestD2SingleNodeRunner(unittest.TestCase):
             report = tdir / "verify_report.json"
             summary = tdir / "verify_summary.txt"
 
-            run_cmd(["python3", "cmd/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(lock_resolved)])
-            run_cmd(["python3", "cmd/builder/main.py", "--lockfile", str(lock_resolved), "--lockfile-out", str(lock_built)])
-            run_cmd(["python3", "cmd/runner/main.py", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(run_a)])
-            run_cmd(["python3", "cmd/runner/main.py", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(run_b)])
+            run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(lock_resolved)])
+            run_cmd(["python3", "modules/build/builder/main.py", "--lockfile", str(lock_resolved), "--lockfile-out", str(lock_built)])
+            run_cmd(["python3", "modules/inference/runner/main.py", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(run_a)])
+            run_cmd(["python3", "modules/inference/runner/main.py", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(run_b)])
             run_cmd([
                 "python3",
-                "cmd/verifier/main.py",
+                "modules/attestation/verifier/main.py",
                 "--baseline",
                 str(run_a / "run_bundle.v1.json"),
                 "--candidate",

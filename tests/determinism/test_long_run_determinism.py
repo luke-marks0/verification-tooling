@@ -14,13 +14,13 @@ class TestLongRunDeterminism(unittest.TestCase):
             tdir = Path(td)
             lock_resolved = tdir / "resolved.lock.json"
             lock_built = tdir / "built.lock.json"
-            run_cmd(["python3", "cmd/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(lock_resolved)])
-            run_cmd(["python3", "cmd/builder/main.py", "--lockfile", str(lock_resolved), "--lockfile-out", str(lock_built)])
+            run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(lock_resolved)])
+            run_cmd(["python3", "modules/build/builder/main.py", "--lockfile", str(lock_resolved), "--lockfile-out", str(lock_built)])
 
             digest_sets = []
             for idx in range(30):
                 out = tdir / f"run-{idx:02d}"
-                run_cmd(["python3", "cmd/runner/main.py", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(out)])
+                run_cmd(["python3", "modules/inference/runner/main.py", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(out)])
                 bundle = read_json(out / "run_bundle.v1.json")
                 digest_sets.append(
                     {

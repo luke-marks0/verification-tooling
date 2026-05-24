@@ -12,7 +12,7 @@ pkgs.dockerTools.buildLayeredImage {
   # runtimeClosure already includes Python — do not add pkgs.python310 again
   contents = [ runtimeClosure ];
   config = {
-    Cmd = [ "${runtimeClosure}/bin/python3" "${runtimeClosure}/cmd/server/main.py" ];
+    Cmd = [ "${runtimeClosure}/bin/python3" "${runtimeClosure}/modules/inference/server/main.py" ];
     WorkingDir = "/workspace";
     Env = [
       "PYTHONPATH=${runtimeClosure}"

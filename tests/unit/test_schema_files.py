@@ -4,12 +4,12 @@ import json
 import pathlib
 import unittest
 
-from pkg.common.jsonschema_compat import DefaultValidator
+from modules.core.common.jsonschema_compat import DefaultValidator
 
 
 class TestSchemaFiles(unittest.TestCase):
     def test_all_schema_files_are_valid_json_schema(self) -> None:
-        schema_files = sorted(pathlib.Path("schemas").glob("*.schema.json"))
+        schema_files = sorted(pathlib.Path("modules/core/schemas").glob("*.schema.json"))
         self.assertGreater(len(schema_files), 0)
         for schema_file in schema_files:
             with self.subTest(file=str(schema_file)):

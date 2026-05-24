@@ -44,7 +44,7 @@ class TestAdversarialE2E(unittest.TestCase):
         self.verifier = subprocess.Popen(
             [
                 sys.executable,
-                "cmd/verifier_server/main.py",
+                "modules/attestation/verifier_server/main.py",
                 "--host",
                 "127.0.0.1",
                 "--port",
@@ -72,7 +72,7 @@ class TestAdversarialE2E(unittest.TestCase):
         self.prover = subprocess.Popen(
             [
                 sys.executable,
-                "cmd/prover/main.py",
+                "modules/attestation/prover/main.py",
                 "--host",
                 "127.0.0.1",
                 "--port",
@@ -156,7 +156,7 @@ class TestAdversarialE2E(unittest.TestCase):
         result = subprocess.run(
             [
                 sys.executable,
-                "cmd/verifier_cli/main.py",
+                "modules/attestation/verifier_cli/main.py",
                 "--transcript",
                 str(self.verifier_dir / "transcript.jsonl"),
                 "--traffic-digest",

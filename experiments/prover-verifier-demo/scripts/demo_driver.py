@@ -10,7 +10,7 @@ Each scenario:
      /traffic, /replay/verdict event) for `--per-scenario` seconds
   3. POST /workload/stop, capture observed/claimed totals
   4. POST /traffic/finalize on the verifier
-  5. Run cmd/verifier_cli with --transcript / --traffic-digest /
+  5. Run modules/attestation/verifier_cli with --transcript / --traffic-digest /
      --workload-summary, capture verdict
   6. Compare against expected; record outcome
 
@@ -223,7 +223,7 @@ def _spawn_servers(
     prover = subprocess.Popen(
         [
             sys.executable,
-            "cmd/prover/main.py",
+            "modules/attestation/prover/main.py",
             "--host",
             "127.0.0.1",
             "--port",
@@ -251,7 +251,7 @@ def _spawn_servers(
     verifier = subprocess.Popen(
         [
             sys.executable,
-            "cmd/verifier_server/main.py",
+            "modules/attestation/verifier_server/main.py",
             "--host",
             "127.0.0.1",
             "--port",
@@ -372,7 +372,7 @@ def _run_scenario(
     verdict_proc = subprocess.run(
         [
             sys.executable,
-            "cmd/verifier_cli/main.py",
+            "modules/attestation/verifier_cli/main.py",
             "--transcript",
             str(transcript_path),
             "--traffic-digest",

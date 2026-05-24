@@ -13,13 +13,13 @@ if str(REPO_ROOT) not in sys.path:
 
 from pydantic import ValidationError as PydanticValidationError
 
-from pkg.common.contracts import validate_with_schema
-from pkg.manifest.model import AuditConfig, Manifest, TokenCommitmentConfig
+from modules.core.common.contracts import validate_with_schema
+from modules.inference.manifest.model import AuditConfig, Manifest, TokenCommitmentConfig
 
 
 def _load_real_manifest() -> dict:
     return json.loads(
-        (REPO_ROOT / "manifests/qwen3-1.7b.manifest.json").read_text(encoding="utf-8")
+        (REPO_ROOT / "modules/inference/manifests/qwen3-1.7b.manifest.json").read_text(encoding="utf-8")
     )
 
 

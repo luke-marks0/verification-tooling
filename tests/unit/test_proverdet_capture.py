@@ -7,7 +7,7 @@ import threading
 import unittest
 from pathlib import Path
 
-from pkg.proverdet.capture import ProverCaptureLog
+from modules.attestation.proverdet.capture import ProverCaptureLog
 
 
 class TestProverCaptureLog(unittest.TestCase):

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pkg.proverdet.verdict import emit_verdict
+from modules.attestation.proverdet.verdict import emit_verdict
 
 
 class TestVerdictStub(unittest.TestCase):
@@ -54,7 +54,7 @@ class TestVerdictCli(unittest.TestCase):
         rc = subprocess.run(
             [
                 sys.executable,
-                "cmd/verifier_cli/main.py",
+                "modules/attestation/verifier_cli/main.py",
                 "--transcript",
                 str(self.transcript),
                 "--out",
@@ -79,7 +79,7 @@ class TestVerdictCli(unittest.TestCase):
         subprocess.run(
             [
                 sys.executable,
-                "cmd/verifier_cli/main.py",
+                "modules/attestation/verifier_cli/main.py",
                 "--transcript",
                 str(self.transcript),
                 "--out",

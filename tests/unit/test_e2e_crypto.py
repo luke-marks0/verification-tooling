@@ -1,4 +1,4 @@
-"""Unit tests for pkg.e2e.crypto."""
+"""Unit tests for modules.attestation.e2e.crypto."""
 from __future__ import annotations
 
 import sys
@@ -9,7 +9,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pkg.e2e.crypto import commit_token, commit_token_stream
+from modules.attestation.e2e.crypto import commit_token, commit_token_stream
 
 
 class TestCommitToken(unittest.TestCase):

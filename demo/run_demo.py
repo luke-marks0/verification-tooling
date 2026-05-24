@@ -24,10 +24,10 @@ import time
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, REPO_ROOT)
 
-from pkg.networkdet import create_net_stack
-from pkg.networkdet.warden import ActiveWarden
-from pkg.networkdet.checksums import ip_checksum, tcp_checksum
-from pkg.common.deterministic import canonical_json_bytes
+from modules.network.networkdet import create_net_stack
+from modules.network.networkdet.warden import ActiveWarden
+from modules.network.networkdet.checksums import ip_checksum, tcp_checksum
+from modules.core.common.deterministic import canonical_json_bytes
 
 
 # ─── Terminal formatting ─────────────────────────────────────────────
@@ -106,7 +106,7 @@ def part1_frame_determinism() -> None:
     print(f"  Two independent servers, same manifest, same inputs.")
     print(f"  Each constructs L2 frames locally. Do the digests match?")
 
-    manifest_path = os.path.join(REPO_ROOT, "manifests", "qwen3-1.7b.manifest.json")
+    manifest_path = os.path.join(REPO_ROOT, "modules", "inference", "manifests", "qwen3-1.7b.manifest.json")
     manifest = json.loads(open(manifest_path).read())
     lockfile = {"artifacts": [
         {"artifact_id": "network-stack", "artifact_type": "network_stack_binary", "digest": "sha256:" + "a" * 64},

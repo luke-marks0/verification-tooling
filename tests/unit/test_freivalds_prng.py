@@ -1,4 +1,4 @@
-"""Determinism and dtype-quantization tests for pkg.freivalds.prng.
+"""Determinism and dtype-quantization tests for modules.attestation.freivalds.prng.
 
 The PRNG is the cross-implementation contract — any backend (stdlib,
 torch, future custom) must produce identical canonical bytes for the same
@@ -11,7 +11,7 @@ from __future__ import annotations
 import struct
 import unittest
 
-from pkg.freivalds import prng
+from modules.attestation.freivalds import prng
 
 
 class TestPRNGDeterminism(unittest.TestCase):

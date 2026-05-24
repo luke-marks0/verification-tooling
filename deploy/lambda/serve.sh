@@ -9,7 +9,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 VENV="${VIRTUAL_ENV:-/home/ubuntu/venv}"
-MANIFEST="${REPO_ROOT}/manifests/qwen3-1.7b.manifest.json"
+MANIFEST="${REPO_ROOT}/modules/inference/manifests/qwen3-1.7b.manifest.json"
 OUT_BASE="/home/ubuntu/server-runs"
 PORT=8000
 
@@ -38,7 +38,7 @@ echo "--- Step 1: Resolver ---"
 LOCKFILE="${RUN_DIR}/lockfile.v1.json"
 RESOLVED_MANIFEST="${RUN_DIR}/manifest.resolved.json"
 
-python3 "${REPO_ROOT}/cmd/resolver/main.py" \
+python3 "${REPO_ROOT}/modules/inference/resolver/main.py" \
     --manifest "${MANIFEST}" \
     --lockfile-out "${LOCKFILE}" \
     --manifest-out "${RESOLVED_MANIFEST}" \
@@ -82,13 +82,13 @@ else
     BUILDER_ARGS+=(--builder-system equivalent)
 fi
 
-python3 "${REPO_ROOT}/cmd/builder/main.py" "${BUILDER_ARGS[@]}"
+python3 "${REPO_ROOT}/modules/build/builder/main.py" "${BUILDER_ARGS[@]}"
 
 echo "Built lockfile: ${BUILT_LOCKFILE}"
 
 # Step 3: Start server
 echo "--- Step 3: Starting server ---"
-exec python3 "${REPO_ROOT}/cmd/server/main.py" \
+exec python3 "${REPO_ROOT}/modules/inference/server/main.py" \
     --manifest "${RESOLVED_MANIFEST}" \
     --lockfile "${BUILT_LOCKFILE}" \
     --out-dir "${RUN_DIR}" \

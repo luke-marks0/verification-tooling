@@ -16,9 +16,9 @@ class TestD1BuilderRuntimeDigest(unittest.TestCase):
             built1 = tdir / "built1.lock.json"
             built2 = tdir / "built2.lock.json"
 
-            run_cmd(["python3", "cmd/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(resolved)])
-            run_cmd(["python3", "cmd/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built1)])
-            run_cmd(["python3", "cmd/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built2)])
+            run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(resolved)])
+            run_cmd(["python3", "modules/build/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built1)])
+            run_cmd(["python3", "modules/build/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built2)])
 
             left = read_json(built1)
             right = read_json(built2)

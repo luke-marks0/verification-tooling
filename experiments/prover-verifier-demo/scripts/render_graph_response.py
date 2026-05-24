@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.patches import FancyBboxPatch
 
-from pkg.proverdet.graph_builder import build_empty_graph
+from modules.attestation.proverdet.graph_builder import build_empty_graph
 
 
 def main() -> None:

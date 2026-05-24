@@ -7,8 +7,8 @@ import threading
 import unittest
 from pathlib import Path
 
-from pkg.common.contracts import ValidationError
-from pkg.proverdet.transcript import TranscriptLog
+from modules.core.common.contracts import ValidationError
+from modules.attestation.proverdet.transcript import TranscriptLog
 
 
 class TestTranscriptLog(unittest.TestCase):

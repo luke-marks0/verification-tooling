@@ -90,7 +90,7 @@ class TestServerLifecycle(unittest.TestCase):
     def setUpClass(cls):
         cls.run_dir = tempfile.mkdtemp(prefix="det-test-")
         run_dir = Path(cls.run_dir)
-        manifest_src = REPO_ROOT / "manifests" / "qwen3-1.7b.manifest.json"
+        manifest_src = REPO_ROOT / "modules" / "inference" / "manifests" / "qwen3-1.7b.manifest.json"
 
         env = os.environ.copy()
         env["PYTHONPATH"] = str(REPO_ROOT)
@@ -100,7 +100,7 @@ class TestServerLifecycle(unittest.TestCase):
         lockfile = run_dir / "lockfile.v1.json"
         resolved_manifest = run_dir / "manifest.resolved.json"
         subprocess.run([
-            sys.executable, str(REPO_ROOT / "cmd/resolver/main.py"),
+            sys.executable, str(REPO_ROOT / "modules/inference/resolver/main.py"),
             "--manifest", str(manifest_src),
             "--lockfile-out", str(lockfile),
             "--manifest-out", str(resolved_manifest),
@@ -110,7 +110,7 @@ class TestServerLifecycle(unittest.TestCase):
         # Build
         built_lockfile = run_dir / "lockfile.built.v1.json"
         subprocess.run([
-            sys.executable, str(REPO_ROOT / "cmd/builder/main.py"),
+            sys.executable, str(REPO_ROOT / "modules/build/builder/main.py"),
             "--lockfile", str(lockfile),
             "--lockfile-out", str(built_lockfile),
             "--builder-system", "equivalent",
@@ -128,7 +128,7 @@ class TestServerLifecycle(unittest.TestCase):
 
         cls.server_proc = subprocess.Popen(
             [
-                sys.executable, str(REPO_ROOT / "cmd/server/main.py"),
+                sys.executable, str(REPO_ROOT / "modules/inference/server/main.py"),
                 "--manifest", cls.manifest_path,
                 "--lockfile", cls.lockfile_path,
                 "--out-dir", str(run_dir / "server"),

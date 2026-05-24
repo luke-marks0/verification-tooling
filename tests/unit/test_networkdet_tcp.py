@@ -4,7 +4,7 @@ from __future__ import annotations
 import struct
 import unittest
 
-from pkg.networkdet.tcp import (
+from modules.network.networkdet.tcp import (
     ACK,
     FIN,
     PSH,

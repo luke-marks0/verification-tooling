@@ -207,10 +207,10 @@
           dontBuild = true;
           installPhase = ''
             mkdir -p $out
-            cp -r cmd $out/cmd
-            cp -r pkg $out/pkg
-            cp -r schemas $out/schemas
-            cp -r manifests $out/manifests 2>/dev/null || true
+            # Capability layer holds all runtime code plus schemas (modules/core/schemas)
+            # and model manifests (modules/inference/manifests).
+            cp -r modules $out/modules
+            cp -r workflows $out/workflows
           '';
         };
 
@@ -236,7 +236,7 @@
           tag = self.rev or "dev";
           contents = [ runtimeClosure ];
           config = {
-            Cmd = [ "${pythonEnv}/bin/python3" "${appSrc}/cmd/server/main.py" ];
+            Cmd = [ "${pythonEnv}/bin/python3" "${appSrc}/modules/inference/server/main.py" ];
             WorkingDir = "/workspace";
             Env = [
               "PYTHONPATH=${appSrc}:${pythonEnv}/${python.sitePackages}"

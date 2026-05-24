@@ -15,7 +15,7 @@ def required_set(schema: dict) -> set[str]:
 
 def main() -> int:
     grouped: dict[str, list[tuple[int, pathlib.Path]]] = defaultdict(list)
-    for p in sorted(pathlib.Path("schemas").glob("*.schema.json")):
+    for p in sorted(pathlib.Path("modules/core/schemas").glob("*.schema.json")):
         m = PATTERN.match(p.name)
         if not m:
             print(f"Unexpected schema filename: {p.name}", file=sys.stderr)

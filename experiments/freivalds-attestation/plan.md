@@ -179,7 +179,7 @@ For each: report `(verdict, ‖ABr − Cr‖∞, observed_time_ms)`. Detection m
 | **P1 — Protocol & stdlib path (this PR)** | spec, prng, check, prover, verifier on stdlib backend; schemas; unit tests; in-process smoke | All unit tests pass on a CPU-only box; smoke shows honest=pass, zeros/random=fail |
 | **P2 — Torch backend & calibration** | torch backend for bf16/fp16/fp8/int8; HTTP server + CLI; calibration sweep on H100 | `data/calibration_v1.json` exists; honest-run band measured |
 | **P3 — Adversarial probes** | S1–S6 probes wired up; detection-margin report | Probe matrix table in `reports/p3_detection_margin.md` |
-| **P4 — Promote endpoint** | `POST /attest` on `cmd/server/main.py`; `cmd/freivalds_verifier/`; manifest challenge profile | Endpoint live; integration test in `tests/integration/` |
+| **P4 — Promote endpoint** | `POST /attest` on `modules/inference/server/main.py`; `cmd/freivalds_verifier/`; manifest challenge profile | Endpoint live; integration test in `tests/integration/` |
 
 ---
 

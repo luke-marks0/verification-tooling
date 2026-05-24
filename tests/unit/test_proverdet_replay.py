@@ -5,12 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from pkg.common.contracts import validate_with_schema
-from pkg.freivalds import Response, verify_response
-from pkg.freivalds.backends.stdlib import StdlibBackend
-from pkg.proverdet.attestation_store import AttestationStore
-from pkg.proverdet.replay import produce_evidence
-from pkg.proverdet.wire import (
+from modules.core.common.contracts import validate_with_schema
+from modules.attestation.freivalds import Response, verify_response
+from modules.attestation.freivalds.backends.stdlib import StdlibBackend
+from modules.attestation.proverdet.attestation_store import AttestationStore
+from modules.attestation.proverdet.replay import produce_evidence
+from modules.attestation.proverdet.wire import (
     ErasureSpec,
     ProofOfWorkSpec,
     ReplayEvidence,
@@ -149,7 +149,7 @@ class TestProduceEvidence(unittest.TestCase):
 
 def _challenge_from_stored(stored: dict[str, object]) -> object:
     """Reconstruct a Challenge from the per-attestation stored body."""
-    from pkg.freivalds import Challenge
+    from modules.attestation.freivalds import Challenge
 
     challenge_dict = stored["challenge"]
     return Challenge.from_dict(challenge_dict)  # type: ignore[arg-type]

@@ -15,7 +15,7 @@ was this:
 > nine-hundred-year-old algorithm, judge whether the deed was done.*
 
 So I went forth into the working tree, and beheld the deterministic serving
-stack already standing — its `cmd/server/main.py` with `/manifest`, `/run`,
+stack already standing — its `modules/inference/server/main.py` with `/manifest`, `/run`,
 `/replay`; its `pkg/manifest`, its schemas, its existing
 `experiments/flop-attestation/`. I read the lay of the land. Then I asked
 questions, one at a time, after the manner of those who would not assume.
@@ -201,7 +201,7 @@ is forty-four green tests, twelve schemas, four reports, six saturation
 datasets, two probe matrices, and one calibration ledger heavier than it
 was at dawn.
 
-Phase 4 — promoting `POST /matmul-challenge` to `cmd/server/main.py`,
+Phase 4 — promoting `POST /matmul-challenge` to `modules/inference/server/main.py`,
 alongside `/run` and `/replay` — remains. But that is a different lay,
 for a different day.
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 import struct
 import unittest
 
-from pkg.networkdet.checksums import ip_checksum, tcp_checksum
-from pkg.networkdet.warden import ActiveWarden
+from modules.network.networkdet.checksums import ip_checksum, tcp_checksum
+from modules.network.networkdet.warden import ActiveWarden
 
 
 def _build_ip_header(

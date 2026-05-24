@@ -1,6 +1,6 @@
 """End-to-end audit-replay flow over HTTP, no GPU required.
 
-Stands up `cmd/server/main.py`'s `ProxyHandler` in-process against a
+Stands up `modules/inference/server/main.py`'s `ProxyHandler` in-process against a
 stubbed vLLM that returns deterministic, prefix-stable prompt AND output
 token IDs.
 
@@ -45,9 +45,9 @@ if str(REPO_ROOT) not in sys.path:
 
 
 def _load_server_module():
-    """Load cmd/server/main.py as a module (cmd/ is not a package)."""
+    """Load modules/inference/server/main.py as a module (cmd/ is not a package)."""
     spec = importlib.util.spec_from_file_location(
-        "server_main", REPO_ROOT / "cmd" / "server" / "main.py"
+        "server_main", REPO_ROOT / "modules" / "inference" / "server" / "main.py"
     )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -169,7 +169,7 @@ def _pick_free_port() -> int:
 def _make_manifest(*, audit_enabled: bool) -> dict[str, Any]:
     """Build a minimal manifest that parses, with or without the audit block."""
     real = json.loads(
-        (REPO_ROOT / "manifests" / "qwen3-1.7b.manifest.json").read_text("utf-8")
+        (REPO_ROOT / "modules" / "inference" / "manifests" / "qwen3-1.7b.manifest.json").read_text("utf-8")
     )
     m = copy.deepcopy(real)
     m["run_id"] = "test-audit-replay-001"

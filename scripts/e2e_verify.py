@@ -46,7 +46,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pkg.e2e.crypto import commit_token, commit_token_stream
+from modules.attestation.e2e.crypto import commit_token, commit_token_stream
 
 # ── Prompts ──────────────────────────────────────────────────────────────
 # A small, diverse set. Keep it short so the demo runs in under a minute.

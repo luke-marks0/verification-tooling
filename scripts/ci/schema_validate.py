@@ -10,13 +10,13 @@ REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pkg.common.jsonschema_compat import DefaultValidator, DEFAULT_VALIDATOR_NAME
+from modules.core.common.jsonschema_compat import DefaultValidator, DEFAULT_VALIDATOR_NAME
 
 SCHEMA_RE = re.compile(r"^[a-z_]+\.v\d+\.schema\.json$")
 
 
 def main() -> int:
-    schema_files = sorted(pathlib.Path("schemas").glob("*.schema.json"))
+    schema_files = sorted(pathlib.Path("modules/core/schemas").glob("*.schema.json"))
     if not schema_files:
         print("No schema files found", file=sys.stderr)
         return 1

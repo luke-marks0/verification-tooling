@@ -10,7 +10,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 VENV="${VIRTUAL_ENV:-/home/ubuntu/venv}"
-MANIFEST="${REPO_ROOT}/manifests/qwen3-1.7b.manifest.json"
+MANIFEST="${REPO_ROOT}/modules/inference/manifests/qwen3-1.7b.manifest.json"
 NUM_RUNS=2
 OUT_BASE="/home/ubuntu/runs"
 
@@ -35,7 +35,7 @@ echo "--- Step 1: Resolver ---"
 LOCKFILE="${OUT_BASE}/lockfile.v1.json"
 mkdir -p "${OUT_BASE}"
 
-python3 "${REPO_ROOT}/cmd/resolver/main.py" \
+python3 "${REPO_ROOT}/modules/inference/resolver/main.py" \
     --manifest "${MANIFEST}" \
     --lockfile-out "${LOCKFILE}" \
     --resolve-hf \
@@ -48,7 +48,7 @@ echo ""
 echo "--- Step 2: Builder ---"
 BUILT_LOCKFILE="${OUT_BASE}/lockfile.built.v1.json"
 
-python3 "${REPO_ROOT}/cmd/builder/main.py" \
+python3 "${REPO_ROOT}/modules/build/builder/main.py" \
     --lockfile "${LOCKFILE}" \
     --lockfile-out "${BUILT_LOCKFILE}" \
     --builder-system equivalent
@@ -64,7 +64,7 @@ for i in $(seq 1 "${NUM_RUNS}"); do
     RUN_DIR="${OUT_BASE}/run-${i}"
     echo "  Run ${i}/${NUM_RUNS} -> ${RUN_DIR}"
 
-    python3 "${REPO_ROOT}/cmd/runner/main.py" \
+    python3 "${REPO_ROOT}/modules/inference/runner/main.py" \
         --manifest "${MANIFEST}" \
         --lockfile "${BUILT_LOCKFILE}" \
         --out-dir "${RUN_DIR}" \
@@ -89,7 +89,7 @@ if [ "${NUM_RUNS}" -ge 2 ]; then
         SUMMARY="${REPORT_DIR}/summary-1-vs-${i}.txt"
 
         echo "  Comparing run 1 vs run ${i}..."
-        python3 "${REPO_ROOT}/cmd/verifier/main.py" \
+        python3 "${REPO_ROOT}/modules/attestation/verifier/main.py" \
             --baseline "${BASELINE}" \
             --candidate "${CANDIDATE}" \
             --report-out "${REPORT}" \

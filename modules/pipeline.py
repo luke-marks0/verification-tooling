@@ -5,7 +5,7 @@ verify_report.v1`` already exists across ``cmd/{resolver,builder,runner,
 verifier}``; :class:`Pipeline` wraps it so a workflow is a shareable file
 instead of an ad-hoc bash script::
 
-    report = (Pipeline.from_manifest("manifests/qwen3-1.7b.manifest.json")
+    report = (Pipeline.from_manifest("modules/inference/manifests/qwen3-1.7b.manifest.json")
               .resolve()             # -> lockfile.v1
               .build()               # -> closure digest
               .run("/tmp/a")         # -> run_bundle.v1

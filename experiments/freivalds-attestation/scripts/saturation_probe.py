@@ -31,7 +31,7 @@ if str(REPO_ROOT) not in sys.path:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from pkg.common.deterministic import canonical_json_text, utc_now_iso
+from modules.core.common.deterministic import canonical_json_text, utc_now_iso
 
 
 _PEAK_TFLOPS_BY_GPU: dict[str, dict[str, float]] = {

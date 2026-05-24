@@ -5,7 +5,7 @@ import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 
-from pkg.proverdet.traffic_publisher import TrafficPublisher
+from modules.attestation.proverdet.traffic_publisher import TrafficPublisher
 
 
 class _RecordingServer(ThreadingMixIn, HTTPServer):

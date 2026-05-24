@@ -45,13 +45,13 @@ MANIFEST="$REPO_ROOT/experiments/e2e-audit/scripts/smoke.manifest.json"
 rm -rf "$RUN_DIR"; mkdir -p "$RUN_DIR"
 export PYTHONPATH="$REPO_ROOT:${PYTHONPATH:-}"
 
-python3 cmd/resolver/main.py \
+python3 modules/inference/resolver/main.py \
   --manifest "$MANIFEST" \
   --lockfile-out "$RUN_DIR/lockfile.v1.json" \
   --manifest-out "$RUN_DIR/manifest.resolved.json" \
   --resolve-hf --hf-resolution-mode online
 
-python3 cmd/builder/main.py \
+python3 modules/build/builder/main.py \
   --lockfile "$RUN_DIR/lockfile.v1.json" \
   --lockfile-out "$RUN_DIR/lockfile.built.v1.json" \
   --builder-system equivalent
@@ -61,7 +61,7 @@ export VLLM_BATCH_INVARIANT=1
 export CUBLAS_WORKSPACE_CONFIG=":4096:8"
 export PYTHONHASHSEED=0
 
-nohup python3 cmd/server/main.py \
+nohup python3 modules/inference/server/main.py \
   --manifest "$RUN_DIR/manifest.resolved.json" \
   --lockfile "$RUN_DIR/lockfile.built.v1.json" \
   --out-dir "$RUN_DIR/server" \

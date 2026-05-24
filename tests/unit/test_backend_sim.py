@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import unittest
 
-from pkg.networkdet.backend_sim import SimulatedBackend
-from pkg.networkdet.config import NetStackConfig
+from modules.network.networkdet.backend_sim import SimulatedBackend
+from modules.network.networkdet.config import NetStackConfig
 
 
 def _test_config() -> NetStackConfig:

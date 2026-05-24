@@ -14,7 +14,7 @@ export PYTHONPATH="/home/ubuntu/deterministic_serving_stack"
 cd /home/ubuntu/deterministic_serving_stack
 
 # Kill existing server
-pkill -f "cmd/server/main.py" 2>/dev/null || true
+pkill -f "modules/inference/server/main.py" 2>/dev/null || true
 pkill -f "vllm.entrypoints" 2>/dev/null || true
 sleep 2
 
@@ -23,8 +23,8 @@ rm -rf "$RUN_DIR"
 mkdir -p "$RUN_DIR"
 
 # Resolve + Build
-python3 cmd/resolver/main.py \
-    --manifest manifests/qwen3-1.7b.manifest.json \
+python3 modules/inference/resolver/main.py \
+    --manifest modules/inference/manifests/qwen3-1.7b.manifest.json \
     --lockfile-out "$RUN_DIR/lockfile.v1.json" \
     --manifest-out "$RUN_DIR/manifest.resolved.json" \
     --resolve-hf --hf-resolution-mode online 2>&1 | tail -2
@@ -48,10 +48,10 @@ print('sha256:' + hashlib.sha256(json.dumps(entries, sort_keys=True, separators=
 else
     BUILDER_ARGS="$BUILDER_ARGS --builder-system equivalent"
 fi
-python3 cmd/builder/main.py $BUILDER_ARGS 2>&1 | tail -2
+python3 modules/build/builder/main.py $BUILDER_ARGS 2>&1 | tail -2
 
 # Start server in background
-nohup python3 cmd/server/main.py \
+nohup python3 modules/inference/server/main.py \
     --manifest "$RUN_DIR/manifest.resolved.json" \
     --lockfile "$RUN_DIR/lockfile.built.v1.json" \
     --out-dir "$RUN_DIR" \

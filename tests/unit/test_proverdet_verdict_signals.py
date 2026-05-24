@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from pkg.proverdet.verdict import SignalResult, compute_budget, replay_correctness
+from modules.attestation.proverdet.verdict import SignalResult, compute_budget, replay_correctness
 
 
 def _entry(
@@ -116,7 +116,7 @@ class TestBandwidthSignal(unittest.TestCase):
         # Any extra byte fires the signal at the default tolerance. The
         # principled check: the verifier observes ground-truth bytes; a
         # claim of N bytes admits exactly N, not N+ε.
-        from pkg.proverdet.verdict import bandwidth_signal
+        from modules.attestation.proverdet.verdict import bandwidth_signal
 
         # Equality at the boundary passes (predicate uses `>`).
         self.assertTrue(bandwidth_signal(traffic_size=1000, claimed_artifact_bytes=1000).passed)
@@ -127,13 +127,13 @@ class TestBandwidthSignal(unittest.TestCase):
 
     def test_zero_claim_returns_passed(self) -> None:
         # No baseline → can't draw a conclusion → defer to other signals.
-        from pkg.proverdet.verdict import bandwidth_signal
+        from modules.attestation.proverdet.verdict import bandwidth_signal
 
         self.assertTrue(bandwidth_signal(traffic_size=99999, claimed_artifact_bytes=0).passed)
 
     def test_caller_can_still_widen_tolerance_for_bring_up(self) -> None:
         # The kwarg is kept for early-bring-up callers; production uses 0.0.
-        from pkg.proverdet.verdict import bandwidth_signal
+        from modules.attestation.proverdet.verdict import bandwidth_signal
 
         self.assertTrue(
             bandwidth_signal(traffic_size=1100, claimed_artifact_bytes=1000, tolerance=0.10).passed

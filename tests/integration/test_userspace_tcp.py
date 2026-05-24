@@ -27,7 +27,7 @@ import time
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, PROJECT_ROOT)
 
-from pkg.networkdet.userspace_tcp_server import (
+from modules.network.networkdet.userspace_tcp_server import (
     FULL_RESPONSE,
     UserspaceServer,
     get_gateway_mac,

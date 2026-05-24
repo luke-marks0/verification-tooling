@@ -20,32 +20,36 @@ python3 -m unittest discover -s tests/determinism -v
 bash scripts/ci/schema_gate.sh
 
 # Run the synthetic runner (no GPU)
-python3 cmd/runner/main.py --manifest manifests/qwen3-1.7b.manifest.json --lockfile <lockfile> --out-dir /tmp/run --mode synthetic
+python3 modules/inference/runner/main.py --manifest modules/inference/manifests/qwen3-1.7b.manifest.json --lockfile <lockfile> --out-dir /tmp/run --mode synthetic
 ```
 
 ## Code layout
 
 ```
-modules/       — Capability layer (build, inference, network, memory, attestation, utils) + Pipeline; curated public interface over pkg/cmd/nix
-workflows/     — Recipe book: runnable compositions of modules (e.g. deterministic_inference_server.py)
-cmd/           — CLI entry points (runner, server, resolver, builder, verifier, capture)
-pkg/           — Shared library code (manifest model, networkdet, common utilities)
-schemas/       — JSON Schema definitions (manifest, lockfile, run_bundle)
-manifests/     — Model manifest files
-tests/         — unit/, integration/, e2e/, determinism/, modules/, fixtures/
-scripts/ci/    — CI scripts (schema gates, conformance checks, test harnesses)
-scripts/       — General utilities (reproduce.sh)
-experiments/   — All experiments, organized by topic (see below)
-docs/          — ADRs, conformance docs, diagrams, release policy
-docs/plans/    — Implementation plans (code changes, not experiments)
+modules/                — Capability layer; each module physically owns its code + shared core/ + Pipeline
+  build/                — Hermetic Nix runtime: builder/, lockfiles/ (flake.nix, nix/ live at root)
+  inference/            — Deterministic vLLM: server/, runner/, resolver/, capture/, manifest/ (model), manifests/ (data)
+  network/              — networkdet/ (sim TCP/IP) + native/libnetdet/ (DPDK transmit)
+  attestation/          — freivalds/, e2e/, proverdet/ + verifier/ (+ verifier_cli/server) + prover/
+  memory/               — PoSE memory-wipe facade (over experiments/memory_wipe)
+  utils/                — provisioning/replay helpers (re-exports core/common)
+  core/                 — Shared: common/ (canonical JSON, digests, schema validation, HF) + schemas/ (JSON Schema defs)
+workflows/              — Recipe book: runnable compositions of modules (e.g. deterministic_inference_server.py)
+tests/                  — unit/, integration/, e2e/, determinism/, modules/, fixtures/
+scripts/ci/             — CI scripts (schema gates, conformance checks, determinism gates d0–d6)
+scripts/                — General utilities (reproduce.sh); scripts/lambda/ (lambda CLI)
+deploy/                 — Lambda/vast/warden provisioning (utils-owned; kept at root for path-depth)
+experiments/            — All experiments, organized by topic (see below)
+docs/                   — ADRs, conformance docs, diagrams, release policy; docs/plans/ = implementation plans
+flake.nix, nix/         — Hermetic build (must live at repo root for Nix)
 ```
 
 ## Capability modules and workflows
 
-The repo is organized **by function**. `modules/<capability>/` is a curated,
-documented public interface over the primitives in `pkg/`, `cmd/`, and
-`flake.nix` — it re-exports rather than relocates, so `pkg/` and its tests are
-untouched. A capability need not be a Python package (build/utils are nix +
+The repo is organized **by function**. Each `modules/<capability>/` **physically
+owns its code** — the former `pkg/` and `cmd/` top-level trees were consolidated
+into the modules, and `core/` holds the shared `common` helpers plus the JSON
+Schema `schemas`. A capability need not be a Python package (build is nix +
 shell); the contract is a documented `README.md`, and for Python ones a small
 `api.py`. `workflows/` composes modules via `modules.Pipeline` into runnable
 recipes. New modules: add a `README.md` (Purpose · Interface · Artifacts ·
@@ -64,7 +68,7 @@ Each experiment folder should contain:
 - `reports/` — analysis and write-ups
 - `figures/` — generated plots/images
 
-Do NOT scatter experiment artifacts across `scripts/`, `results/`, `docs/reports/`, or other top-level directories. If code is reusable across experiments, put it in `pkg/` with tests in `tests/unit/`.
+Do NOT scatter experiment artifacts across `scripts/`, `results/`, `docs/reports/`, or other top-level directories. If code is reusable across experiments, put it in the relevant `modules/<capability>/` (or `modules/core/` if shared) with tests in `tests/unit/`.
 
 Use `/experiment <idea>` to start a new experiment — it walks through design, planning, critique, and implementation.
 

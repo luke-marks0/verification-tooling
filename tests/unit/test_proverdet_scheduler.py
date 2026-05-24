@@ -5,8 +5,8 @@ import unittest
 from collections.abc import Iterator
 from pathlib import Path
 
-from pkg.proverdet.scheduler import VerifierScheduler
-from pkg.proverdet.transcript import TranscriptLog
+from modules.attestation.proverdet.scheduler import VerifierScheduler
+from modules.attestation.proverdet.transcript import TranscriptLog
 
 
 class _FakeClient:

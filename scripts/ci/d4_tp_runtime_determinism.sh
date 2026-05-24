@@ -20,7 +20,7 @@ export NCCL_DEBUG=WARN
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-MANIFEST="manifests/qwen2.5-32b-tp4.manifest.json"
+MANIFEST="modules/inference/manifests/qwen2.5-32b-tp4.manifest.json"
 RESOLVED="$TMP_DIR/resolved.lock.json"
 BUILT="$TMP_DIR/built.lock.json"
 RUN_A="$TMP_DIR/run-a"
@@ -29,21 +29,21 @@ REPORT="$TMP_DIR/verify_report.json"
 SUMMARY="$TMP_DIR/verify_summary.txt"
 
 log "Resolving manifest..."
-python3 cmd/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
+python3 modules/inference/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
 
 log "Building lockfile..."
-python3 cmd/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT"
+python3 modules/build/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT"
 
 log "Run A: vLLM inference with TP=$GPU_COUNT..."
-python3 cmd/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" \
+python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" \
     --out-dir "$RUN_A" --mode vllm --replica-id replica-0
 
 log "Run B: vLLM inference with TP=$GPU_COUNT..."
-python3 cmd/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" \
+python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" \
     --out-dir "$RUN_B" --mode vllm --replica-id replica-0
 
 log "Verifying determinism..."
-python3 cmd/verifier/main.py \
+python3 modules/attestation/verifier/main.py \
     --baseline "$RUN_A/run_bundle.v1.json" \
     --candidate "$RUN_B/run_bundle.v1.json" \
     --report-out "$REPORT" \

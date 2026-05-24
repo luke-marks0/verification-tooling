@@ -2,13 +2,13 @@
 
 Turns application-layer bytes into bitwise-reproducible L2 frames (a real NIC
 via DPDK, or a pure-Python ``sim`` backend for tests). Re-exports the
-``pkg/networkdet`` primitives as the curated public surface.
+``modules/network/networkdet`` primitives as the curated public surface.
 """
 from __future__ import annotations
 
 from typing import Any
 
-from pkg.networkdet import DeterministicNetStack, create_net_stack
+from modules.network.networkdet import DeterministicNetStack, create_net_stack
 
 __all__ = ["create_net_stack", "DeterministicNetStack", "egress_frames"]
 

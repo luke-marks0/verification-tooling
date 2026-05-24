@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Drive the audit-replay loop against a live deterministic server.
 
-Run this AFTER `cmd/server/main.py` is up with an audit-enabled manifest.
+Run this AFTER `modules/inference/server/main.py` is up with an audit-enabled manifest.
 
 Steps:
 1. POST /run — expect bundle with token_commitments

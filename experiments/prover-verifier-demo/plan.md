@@ -62,6 +62,6 @@ experiments/prover-verifier-demo/
 
 1. `docs/plans/prover-verifier-demo.md` — full plan.
 2. `EXPERIMENT_LOG.md` — what shipped and what surprised.
-3. `cmd/prover/main.py`, `cmd/verifier_server/main.py`, `cmd/verifier_cli/main.py`.
+3. `modules/attestation/prover/main.py`, `modules/attestation/verifier_server/main.py`, `modules/attestation/verifier_cli/main.py`.
 4. `pkg/proverdet/*`.
 5. `demo.sh` and `scripts/demo_driver.py`.

@@ -9,7 +9,7 @@ import unittest
 import urllib.request
 from pathlib import Path
 
-from pkg.common.contracts import validate_with_schema
+from modules.core.common.contracts import validate_with_schema
 from tests.proverdet._helpers import (
     REPO_ROOT,
     read_bound_port,
@@ -24,7 +24,7 @@ class TestReplayStreaming(unittest.TestCase):
         self.proc = subprocess.Popen(
             [
                 sys.executable,
-                "cmd/prover/main.py",
+                "modules/attestation/prover/main.py",
                 "--host",
                 "127.0.0.1",
                 "--port",

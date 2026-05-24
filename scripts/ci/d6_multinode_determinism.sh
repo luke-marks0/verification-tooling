@@ -13,8 +13,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-MANIFEST="${MANIFEST:-$REPO_ROOT/manifests/qwen3-30b-moe-pp4-multinode.manifest.json}"
-TP_MANIFEST="${TP_MANIFEST:-$REPO_ROOT/manifests/qwen3-30b-moe-tp4-multinode.manifest.json}"
+MANIFEST="${MANIFEST:-$REPO_ROOT/modules/inference/manifests/qwen3-30b-moe-pp4-multinode.manifest.json}"
+TP_MANIFEST="${TP_MANIFEST:-$REPO_ROOT/modules/inference/manifests/qwen3-30b-moe-tp4-multinode.manifest.json}"
 LOCKFILE="${LOCKFILE:-$REPO_ROOT/modules/build/lockfiles/qwen3-30b-moe.lockfile.json}"
 OUT_DIR="${OUT_DIR:-$REPO_ROOT/experiments/multinode-determinism/runs-$(date +%Y%m%d)}"
 SKIP_TP="${SKIP_TP:-0}"
@@ -57,7 +57,7 @@ run_inference() {
     mkdir -p "$out_path"
     echo "--- Running: $label ---"
 
-    env $extra_env python3 "$REPO_ROOT/cmd/runner/main.py" \
+    env $extra_env python3 "$REPO_ROOT/modules/inference/runner/main.py" \
         --manifest "$manifest" \
         --lockfile "$LOCKFILE" \
         --out-dir "$out_path" \

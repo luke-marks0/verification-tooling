@@ -4,11 +4,11 @@ Reads two base manifests (the existing TP=4 multinode manifests) and rewrites
 the `requests` block per tier using `scripts/d6/prompts.py` as the source of
 truth. Lockfiles are NOT generated here — that requires HF Hub access and
 must run inside the container that has the runner deps. After this script,
-run `cmd/resolver/main.py --resolve-hf` for each output manifest.
+run `modules/inference/resolver/main.py --resolve-hf` for each output manifest.
 
 Output:
-  manifests/dbrx-tp4-{smoke,medium,large}.manifest.json
-  manifests/mistral-large2-tp4-{smoke,medium}.manifest.json
+  modules/inference/manifests/dbrx-tp4-{smoke,medium,large}.manifest.json
+  modules/inference/manifests/mistral-large2-tp4-{smoke,medium}.manifest.json
 """
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ def main() -> int:
         ("mistral-large2-tp4-multinode", "medium", "mistral-large2-tp4-medium"),
         ("mistral-large2-tp4-multinode", "large", "mistral-large2-tp4-large"),
     ]
-    manifests_dir = REPO / "manifests"
+    manifests_dir = REPO / "modules/inference/manifests"
     for base_name, tier, out_name in targets:
         base = manifests_dir / f"{base_name}.manifest.json"
         out = manifests_dir / f"{out_name}.manifest.json"

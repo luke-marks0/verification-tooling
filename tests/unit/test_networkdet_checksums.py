@@ -4,7 +4,7 @@ from __future__ import annotations
 import struct
 import unittest
 
-from pkg.networkdet.checksums import ip_checksum, tcp_checksum
+from modules.network.networkdet.checksums import ip_checksum, tcp_checksum
 
 
 class TestIPChecksum(unittest.TestCase):

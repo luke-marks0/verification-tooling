@@ -5,7 +5,7 @@ set -euo pipefail
 # hasn't installed the dev tool yet).
 
 CFG=experiments/prover-verifier-demo/ruff.toml
-PATHS=(pkg/proverdet cmd/prover cmd/verifier_server cmd/verifier_cli)
+PATHS=(modules/attestation/proverdet modules/attestation/prover modules/attestation/verifier_server modules/attestation/verifier_cli)
 TEST_GLOBS=()
 for pattern in \
     'tests/unit/test_proverdet_*.py' \

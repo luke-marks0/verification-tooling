@@ -9,7 +9,7 @@ from __future__ import annotations
 import base64
 import unittest
 
-from pkg.freivalds import (
+from modules.attestation.freivalds import (
     Challenge,
     ComparisonMode,
     MatmulSpec,
@@ -17,8 +17,8 @@ from pkg.freivalds import (
     execute_challenge,
     verify_response,
 )
-from pkg.freivalds.backends.stdlib import StdlibBackend
-from pkg.freivalds.spec import MatmulResult, Response
+from modules.attestation.freivalds.backends.stdlib import StdlibBackend
+from modules.attestation.freivalds.spec import MatmulResult, Response
 
 
 def _make_challenge() -> Challenge:
@@ -109,7 +109,7 @@ class TestTamperingOnTheWire(unittest.TestCase):
         target = next(r for r in self.response.results if r.id == "int8-bitwise")
         c_bytes = bytearray(base64.b64decode(target.c_b64))
         c_bytes[0] ^= 0x01  # tamper one entry
-        from pkg.freivalds import prng
+        from modules.attestation.freivalds import prng
         new_digest = prng.matrix_digest(bytes(c_bytes))
         tampered = MatmulResult(
             id=target.id,

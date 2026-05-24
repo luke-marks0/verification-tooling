@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from pkg.networkdet.config import NetConfigError, NetStackConfig, parse_net_config
+from modules.network.networkdet.config import NetConfigError, NetStackConfig, parse_net_config
 
 
 def _base_manifest(**overrides: object) -> dict:

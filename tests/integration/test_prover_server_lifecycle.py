@@ -26,7 +26,7 @@ class TestProverLifecycle(unittest.TestCase):
         self.proc = subprocess.Popen(
             [
                 sys.executable,
-                "cmd/prover/main.py",
+                "modules/attestation/prover/main.py",
                 "--host",
                 "127.0.0.1",
                 "--port",
@@ -69,7 +69,7 @@ class TestProverLifecycle(unittest.TestCase):
         self.assertEqual(body, {"ok": True})
 
     def test_get_graph_returns_empty_placeholder(self) -> None:
-        from pkg.common.contracts import validate_with_schema
+        from modules.core.common.contracts import validate_with_schema
 
         status, body = http_get_json(f"http://127.0.0.1:{self.port}/graph")
         self.assertEqual(status, 200)

@@ -18,8 +18,8 @@ class TestBuilderClosureProfile(unittest.TestCase):
         built: Path,
         builder_system: str = "nix",
     ) -> dict:
-        run_cmd(["python3", "cmd/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(resolved)])
-        cmd = ["python3", "cmd/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built)]
+        run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(resolved)])
+        cmd = ["python3", "modules/build/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built)]
         if builder_system != "nix":
             cmd.extend(["--builder-system", builder_system])
         run_cmd(cmd)
@@ -72,7 +72,7 @@ class TestBuilderClosureProfile(unittest.TestCase):
             built2 = tdir / "built2.lock.json"
 
             self._resolve_and_build(manifest=manifest, resolved=resolved, built=built1)
-            run_cmd(["python3", "cmd/builder/main.py", "--lockfile", str(built1), "--lockfile-out", str(built2)])
+            run_cmd(["python3", "modules/build/builder/main.py", "--lockfile", str(built1), "--lockfile-out", str(built2)])
 
             left = read_json(built1)
             right = read_json(built2)
@@ -130,11 +130,11 @@ class TestBuilderClosureProfile(unittest.TestCase):
 
             resolved = tdir / "resolved.lock.json"
             built = tdir / "built.lock.json"
-            run_cmd(["python3", "cmd/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(resolved)])
+            run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(resolved)])
             run_cmd(
                 [
                     "python3",
-                    "cmd/builder/main.py",
+                    "modules/build/builder/main.py",
                     "--lockfile",
                     str(resolved),
                     "--lockfile-out",

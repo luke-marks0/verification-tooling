@@ -112,7 +112,7 @@ def start_kernel_server(port: int):
 # Userspace TCP server wrapper
 # ---------------------------------------------------------------------------
 def start_userspace_server(port: int, ip: str, mac: str, gw_mac: str, interface: str):
-    from pkg.networkdet.userspace_tcp_server import UserspaceServer, RESPONSES
+    from modules.network.networkdet.userspace_tcp_server import UserspaceServer, RESPONSES
 
     # Pre-populate responses for all benchmark sizes
     for name, size in PAYLOAD_SIZES:

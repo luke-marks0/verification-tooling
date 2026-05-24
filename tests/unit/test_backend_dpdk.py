@@ -6,9 +6,9 @@ import unittest
 from ctypes import c_uint8
 from unittest.mock import MagicMock, patch
 
-from pkg.networkdet.backend_dpdk import DPDKBackend
-from pkg.networkdet.config import NetStackConfig
-from pkg.networkdet.libnetdet_ffi import TxResult
+from modules.network.networkdet.backend_dpdk import DPDKBackend
+from modules.network.networkdet.config import NetStackConfig
+from modules.network.networkdet.libnetdet_ffi import TxResult
 
 
 def _test_config(**overrides) -> NetStackConfig:

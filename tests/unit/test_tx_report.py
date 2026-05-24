@@ -4,7 +4,7 @@ from __future__ import annotations
 import dataclasses
 import unittest
 
-from pkg.networkdet.tx_report import TxReport
+from modules.network.networkdet.tx_report import TxReport
 
 
 DIGEST_A = "sha256:" + "a" * 64

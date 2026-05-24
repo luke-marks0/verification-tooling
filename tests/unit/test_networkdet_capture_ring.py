@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from pkg.networkdet.capture import CaptureRing
+from modules.network.networkdet.capture import CaptureRing
 
 
 class TestCaptureRing(unittest.TestCase):

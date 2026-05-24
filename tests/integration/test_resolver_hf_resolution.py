@@ -13,10 +13,10 @@ import urllib.parse
 from pathlib import Path
 from unittest import mock
 
-from pkg.common.deterministic import canonical_json_bytes
-from pkg.common.hf_resolution import HFResolutionError, resolve_hf_model
+from modules.core.common.deterministic import canonical_json_bytes
+from modules.core.common.hf_resolution import HFResolutionError, resolve_hf_model
 
-_RESOLVER_MODULE_PATH = Path(__file__).resolve().parents[2] / "cmd" / "resolver" / "main.py"
+_RESOLVER_MODULE_PATH = Path(__file__).resolve().parents[2] / "modules" / "inference" / "resolver" / "main.py"
 _RESOLVER_SPEC = importlib.util.spec_from_file_location("resolver_main", _RESOLVER_MODULE_PATH)
 if _RESOLVER_SPEC is None or _RESOLVER_SPEC.loader is None:
     raise RuntimeError(f"Unable to load resolver module from {_RESOLVER_MODULE_PATH}")

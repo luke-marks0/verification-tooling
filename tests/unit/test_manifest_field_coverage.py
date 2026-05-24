@@ -18,9 +18,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pkg.manifest.model import Manifest
+from modules.inference.manifest.model import Manifest
 
-SCHEMA_PATH = REPO_ROOT / "schemas" / "manifest.v1.schema.json"
+SCHEMA_PATH = REPO_ROOT / "modules" / "core" / "schemas" / "manifest.v1.schema.json"
 POSITIVE_FIXTURE = REPO_ROOT / "tests" / "fixtures" / "positive" / "manifest.v1.example.json"
 
 
@@ -320,7 +320,7 @@ class TestManifestFieldCoverage(unittest.TestCase):
         cls.covered_paths |= _collect_instance_paths(fixture)
 
         # Source 2: real manifest (if present)
-        real_path = REPO_ROOT / "manifests" / "qwen3-1.7b.manifest.json"
+        real_path = REPO_ROOT / "modules" / "inference" / "manifests" / "qwen3-1.7b.manifest.json"
         if real_path.exists():
             real = json.loads(real_path.read_text(encoding="utf-8"))
             Manifest.model_validate(real)
@@ -414,7 +414,7 @@ class TestManifestFieldCoverage(unittest.TestCase):
         # Collect all values that appear in coverage manifests + fixtures
         all_manifests = list(_build_coverage_manifests())
         all_manifests.append(json.loads(POSITIVE_FIXTURE.read_text(encoding="utf-8")))
-        real_path = REPO_ROOT / "manifests" / "qwen3-1.7b.manifest.json"
+        real_path = REPO_ROOT / "modules" / "inference" / "manifests" / "qwen3-1.7b.manifest.json"
         if real_path.exists():
             all_manifests.append(json.loads(real_path.read_text(encoding="utf-8")))
 

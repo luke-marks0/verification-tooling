@@ -16,7 +16,7 @@ The protocol pieces (`verifier`, `prover`, noise generators, DRAM/HBM/NVMe
 backends) live in a self-contained `pose` package with its own tests.
 
 **Artifacts.** Produces an erasure report (challenge success rate, timings).
-Integrates with the attestation flow via `pkg/proverdet/erasure.py`
+Integrates with the attestation flow via `modules/attestation/proverdet/erasure.py`
 (`run_erasure`).
 
 **Requirements.** Root on the target; a GPU for HBM wipes. Research-grade PoC.

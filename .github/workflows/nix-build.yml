@@ -6,9 +6,8 @@ on:
       - 'flake.nix'
       - 'flake.lock'
       - 'nix/**'
-      - 'cmd/**'
-      - 'pkg/**'
-      - 'schemas/**'
+      - 'modules/**'
+      - 'workflows/**'
   workflow_dispatch:
 
 permissions:

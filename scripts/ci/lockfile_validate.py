@@ -10,8 +10,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pkg.common.contracts import ValidationError, validate_with_schema
-from pkg.common.deterministic import compute_lockfile_digest
+from modules.core.common.contracts import ValidationError, validate_with_schema
+from modules.core.common.deterministic import compute_lockfile_digest
 
 
 def main() -> int:

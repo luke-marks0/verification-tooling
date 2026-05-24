@@ -1,6 +1,6 @@
 """D6 Phase 2 PP=2 smoke — distributed inference over a 2-node Ray cluster.
 
-Triggers cmd/runner/vllm_runner.py's `pp_size > 1` branch, which pins the
+Triggers modules/inference/runner/vllm_runner.py's `pp_size > 1` branch, which pins the
 cross-node NCCL environment. Prints TOKEN_IDS on stdout for diff.
 """
 import os
@@ -8,7 +8,7 @@ import os
 os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 os.environ["PYTHONHASHSEED"] = "0"
 
-# Manually apply the NCCL pinning that cmd/runner/vllm_runner.py would set
+# Manually apply the NCCL pinning that modules/inference/runner/vllm_runner.py would set
 # for pp_size > 1 / VLLM_MULTI_NODE runs. Required because this smoke script
 # calls LLM() directly instead of going through the runner.
 os.environ["NCCL_ALGO"] = "Ring"

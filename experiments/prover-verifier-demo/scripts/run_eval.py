@@ -142,7 +142,7 @@ def _spawn_pair(
     verifier = subprocess.Popen(
         [
             sys.executable,
-            "cmd/verifier_server/main.py",
+            "modules/attestation/verifier_server/main.py",
             "--host",
             "127.0.0.1",
             "--port",
@@ -166,7 +166,7 @@ def _spawn_pair(
     prover = subprocess.Popen(
         [
             sys.executable,
-            "cmd/prover/main.py",
+            "modules/attestation/prover/main.py",
             "--host",
             "127.0.0.1",
             "--port",
@@ -271,7 +271,7 @@ def _run_cell(
             verdict_proc = subprocess.run(
                 [
                     sys.executable,
-                    "cmd/verifier_cli/main.py",
+                    "modules/attestation/verifier_cli/main.py",
                     "--transcript",
                     str(work_dir / "verifier" / "transcript.jsonl"),
                     "--traffic-digest",

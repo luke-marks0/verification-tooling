@@ -29,8 +29,8 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pkg.common.deterministic import canonical_json_text, utc_now_iso
-from pkg.freivalds import (
+from modules.core.common.deterministic import canonical_json_text, utc_now_iso
+from modules.attestation.freivalds import (
     Challenge,
     ComparisonMode,
     MatmulSpec,
@@ -38,11 +38,11 @@ from pkg.freivalds import (
     execute_challenge,
     verify_response,
 )
-from pkg.freivalds.spec import INTEGER_DTYPES
+from modules.attestation.freivalds.spec import INTEGER_DTYPES
 
 # Imported here so a CPU-only `--help` still works
 def _import_torch_backend():
-    from pkg.freivalds.backends.torch_backend import TorchBackend
+    from modules.attestation.freivalds.backends.torch_backend import TorchBackend
     return TorchBackend
 
 

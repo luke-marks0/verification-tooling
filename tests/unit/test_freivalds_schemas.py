@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import unittest
 
-from pkg.common.contracts import ValidationError, validate_with_schema
-from pkg.freivalds import (
+from modules.core.common.contracts import ValidationError, validate_with_schema
+from modules.attestation.freivalds import (
     Challenge,
     ComparisonMode,
     MatmulSpec,
@@ -15,7 +15,7 @@ from pkg.freivalds import (
     execute_challenge,
     verify_response,
 )
-from pkg.freivalds.backends.stdlib import StdlibBackend
+from modules.attestation.freivalds.backends.stdlib import StdlibBackend
 
 
 def _challenge() -> Challenge:
