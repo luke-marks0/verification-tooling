@@ -2,13 +2,13 @@
 # Run the full deterministic serving pipeline on a Lambda H100 PCIe instance.
 #
 # Usage:
-#   deploy/lambda/run.sh [--runs N] [--manifest PATH]
+#   scripts/deploy/lambda/run.sh [--runs N] [--manifest PATH]
 #
 # Runs the resolver -> builder -> runner pipeline, then optionally runs the
 # verifier to compare repeated runs for batch invariance.
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 VENV="${VIRTUAL_ENV:-/home/ubuntu/venv}"
 MANIFEST="${REPO_ROOT}/modules/inference/manifests/qwen3-1.7b.manifest.json"
 NUM_RUNS=2

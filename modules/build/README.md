@@ -31,9 +31,10 @@ the deploy path does); the default path records closure metadata only.
 the Nix store. The OCI image pre-sets `VLLM_BATCH_INVARIANT=1`,
 `CUBLAS_WORKSPACE_CONFIG=:4096:8`, `PYTHONHASHSEED=0`.
 
-**Underlying code.** `lockfiles/` (co-located in this module), `flake.nix`,
-`nix/`, `modules/build/builder/main.py`. (`flake.nix`/`nix/` stay at the repo root — Nix
-requires the flake at the root.)
+**Underlying code.** `lockfiles/` + `nix/` (co-located in this module),
+`modules/build/builder/main.py`, and `flake.nix` (at the repo root — the flake's
+`src = self` packages repo-wide code and callers invoke `.#`, so it must root the
+repo; `nix/` isn't referenced by the flake, so it lives here in the module).
 
 **Status.** Production-grade. Python facade in `modules/build/api.py`:
 `build_runtime(lockfile)` runs anywhere (used by `Pipeline.build`);

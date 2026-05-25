@@ -58,9 +58,9 @@ Production LLM deployments serving models larger than a single GPU's memory (70B
 4. **`modules/inference/server/main.py`** — Added `--distributed-executor-backend` CLI flag passthrough.
 5. **`manifests/qwen3-30b-moe-pp4-multinode.manifest.json`** — PP=4, Ray backend, H100 hardware profile, batch invariance enabled.
 6. **`manifests/qwen3-30b-moe-tp4-multinode.manifest.json`** — TP=4, Ray backend, H100, batch invariance enabled.
-7. **`deploy/vast/grab_cluster.sh`** — Interactive script to provision 4 vast.ai nodes.
-8. **`deploy/vast/setup_cluster.sh`** — Sets up Ray cluster across 4 nodes.
-9. **`deploy/vast/teardown_cluster.sh`** — Destroys vast.ai instances.
+7. **`scripts/deploy/vast/grab_cluster.sh`** — Interactive script to provision 4 vast.ai nodes.
+8. **`scripts/deploy/vast/setup_cluster.sh`** — Sets up Ray cluster across 4 nodes.
+9. **`scripts/deploy/vast/teardown_cluster.sh`** — Destroys vast.ai instances.
 10. **`scripts/ci/d6_multinode_determinism.sh`** — Full test harness (same-config, batch+order invariance, TP-over-TCP stretch).
 
 ---
@@ -341,9 +341,9 @@ NCCL_SOCKET_IFNAME = eth0
 | `schemas/manifest.v1.schema.json` | JSON Schema for manifest validation |
 | `manifests/qwen3-30b-moe-pp4-multinode.manifest.json` | PP=4 multi-node manifest |
 | `manifests/qwen3-30b-moe-tp4-multinode.manifest.json` | TP=4 multi-node manifest |
-| `deploy/vast/grab_cluster.sh` | Provision 4 vast.ai nodes |
-| `deploy/vast/setup_cluster.sh` | Form Ray cluster across nodes |
-| `deploy/vast/teardown_cluster.sh` | Destroy vast.ai instances |
+| `scripts/deploy/vast/grab_cluster.sh` | Provision 4 vast.ai nodes |
+| `scripts/deploy/vast/setup_cluster.sh` | Form Ray cluster across nodes |
+| `scripts/deploy/vast/teardown_cluster.sh` | Destroy vast.ai instances |
 | `scripts/ci/d6_multinode_determinism.sh` | Full D6 test harness |
 | `experiments/MULTI_GPU_DETERMINISM_REPORT.md` | D4 results report (prior experiment) |
 

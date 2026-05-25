@@ -6,8 +6,8 @@ from pathlib import Path
 import re
 import sys
 
-CATALOG_PATH = Path("conformance/spec_requirements.v1.json")
-BLOCKERS_PATH = Path("conformance/RELEASE_BLOCKERS.json")
+CATALOG_PATH = Path("tests/conformance/spec_requirements.v1.json")
+BLOCKERS_PATH = Path("tests/conformance/RELEASE_BLOCKERS.json")
 ID_RE = re.compile(r"^SPEC-[0-9]+(\.[0-9]+)?-[A-Z0-9_-]+$")
 VALID_MODALITY = {"MUST", "SHOULD", "MAY"}
 VALID_STATUS = {"implemented", "partial", "planned", "scaffolding"}

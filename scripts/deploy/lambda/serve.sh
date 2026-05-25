@@ -2,12 +2,12 @@
 # Start the deterministic serving stack on a Lambda instance.
 #
 # Usage:
-#   deploy/lambda/serve.sh [--manifest PATH] [--port PORT]
+#   scripts/deploy/lambda/serve.sh [--manifest PATH] [--port PORT]
 #
 # Prerequisites: run setup.sh first, or have vLLM + model cached.
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 VENV="${VIRTUAL_ENV:-/home/ubuntu/venv}"
 MANIFEST="${REPO_ROOT}/modules/inference/manifests/qwen3-1.7b.manifest.json"
 OUT_BASE="/home/ubuntu/server-runs"

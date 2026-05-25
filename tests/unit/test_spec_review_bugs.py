@@ -168,7 +168,7 @@ class TestBug4RelativeSchemaPath(unittest.TestCase):
 
 
 class TestBug5OciImageCmd(unittest.TestCase):
-    """Bug #5: nix/images/runtime-image.nix hardcodes /app/modules/inference/server/main.py
+    """Bug #5: modules/build/nix/images/runtime-image.nix hardcodes /app/modules/inference/server/main.py
     but the flake puts code under /nix/store/...-deterministic-serving-stack/.
 
     We can't test the actual Nix build here, but we can verify the paths
@@ -176,7 +176,7 @@ class TestBug5OciImageCmd(unittest.TestCase):
     """
 
     def test_legacy_image_cmd_path_matches_flake(self) -> None:
-        legacy_image = Path("nix/images/runtime-image.nix").read_text()
+        legacy_image = Path("modules/build/nix/images/runtime-image.nix").read_text()
         flake = Path("flake.nix").read_text()
 
         # The legacy image uses a hardcoded /app path
@@ -186,7 +186,7 @@ class TestBug5OciImageCmd(unittest.TestCase):
 
         if legacy_uses_app and flake_uses_nix_store:
             self.fail(
-                "Bug #5 confirmed: nix/images/runtime-image.nix uses '/app/cmd/...' "
+                "Bug #5 confirmed: modules/build/nix/images/runtime-image.nix uses '/app/cmd/...' "
                 "but flake.nix puts code at '${appSrc}/cmd/...' "
                 "(/nix/store/...-deterministic-serving-stack/cmd/...). "
                 "The legacy image Cmd would fail with file-not-found."

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Start the deterministic server on a remote Lambda node.
-# Usage: deploy/lambda/start_server.sh <ip>
+# Usage: scripts/deploy/lambda/start_server.sh <ip>
 set -euo pipefail
 
 IP="${1:?Usage: $0 <ip>}"

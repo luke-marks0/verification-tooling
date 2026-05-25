@@ -2,7 +2,7 @@
 # Setup script for Lambda Cloud H100 PCIe instance.
 # Run this once after provisioning a 1x H100 PCIe instance on Lambda Cloud.
 #
-# Usage: ssh ubuntu@<lambda-ip> 'bash -s' < deploy/lambda/setup.sh
+# Usage: ssh ubuntu@<lambda-ip> 'bash -s' < scripts/deploy/lambda/setup.sh
 set -euo pipefail
 
 echo "=== Deterministic Serving Stack: Lambda H100 PCIe Setup ==="
@@ -54,4 +54,4 @@ if torch.cuda.is_available():
 
 echo ""
 echo "=== Setup complete ==="
-echo "Run the pipeline with: deploy/lambda/run.sh"
+echo "Run the pipeline with: scripts/deploy/lambda/run.sh"

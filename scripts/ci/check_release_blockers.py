@@ -7,7 +7,7 @@ import sys
 
 
 def main() -> int:
-    blockers_path = Path("conformance/RELEASE_BLOCKERS.json")
+    blockers_path = Path("tests/conformance/RELEASE_BLOCKERS.json")
     blockers = json.loads(blockers_path.read_text(encoding="utf-8"))
     required = blockers.get("required_conformance_ids", [])
     if not required:

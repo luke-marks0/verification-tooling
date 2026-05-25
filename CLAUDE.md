@@ -27,7 +27,7 @@ python3 modules/inference/runner/main.py --manifest modules/inference/manifests/
 
 ```
 modules/                — Capability layer; each module physically owns its code + shared core/ + Pipeline
-  build/                — Hermetic Nix runtime: builder/, lockfiles/ (flake.nix, nix/ live at root)
+  build/                — Hermetic Nix runtime: builder/, lockfiles/, nix/ (flake.nix + flake.lock live at root)
   inference/            — Deterministic vLLM: server/, runner/, resolver/, capture/, manifest/ (model), manifests/ (data)
   network/              — networkdet/ (sim TCP/IP) + native/libnetdet/ (DPDK transmit)
   attestation/          — freivalds/, e2e/, proverdet/ + verifier/ (+ verifier_cli/server) + prover/
@@ -38,11 +38,10 @@ workflows/              — Recipe book: runnable compositions of modules (e.g. 
 tests/                  — unit/, integration/, e2e/, determinism/, modules/, fixtures/
 scripts/ci/             — CI scripts (schema gates, conformance checks, determinism gates d0–d6)
 scripts/                — General utilities (reproduce.sh); scripts/lambda/ (lambda CLI)
-deploy/                 — Lambda/vast/warden provisioning (utils-owned; kept at root for path-depth)
+scripts/deploy/         — Lambda/vast/warden provisioning (utils-owned)
 experiments/            — All experiments, organized by topic (see below)
-docs/                   — Ideas & use cases (use-cases.md); ADRs/plans/conformance reviews live on the `experiments` branch
-conformance/            — Machine-readable spec catalog + release blockers (read by CI gates)
-flake.nix, nix/         — Hermetic build (must live at repo root for Nix)
+tests/conformance/      — Machine-readable spec catalog + release blockers (read by CI gates)
+flake.nix, flake.lock   — Hermetic build entrypoint + pin (at root: the flake's src=self packages repo-wide code and callers invoke `.#`)
 ```
 
 ## Capability modules and workflows

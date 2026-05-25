@@ -137,7 +137,7 @@ interface ([`modules/`](modules/)); [`workflows/`](workflows/) is the recipe boo
 that composes them.
 
 > 💡 **New here, or looking for ideas of what to build?** See
-> [**Ideas & use cases**](docs/use-cases.md) — a plain-language tour of what this
+> [**Ideas & use cases**](#ideas--use-cases) — a plain-language tour of what this
 > can do.
 
 | Capability | What it does | Start here |
@@ -147,7 +147,7 @@ that composes them.
 | [network](modules/network/) | Deterministic L2 egress frames | `modules.network.egress_frames(...)` |
 | [memory](modules/memory/) | PoSE memory wipe + erasure attestation | `modules/memory/` |
 | [attestation](modules/attestation/) | Matmul / token / replay verification | `modules/attestation/verifier`, `modules/attestation/freivalds` |
-| [utils](modules/utils/) | Provisioning, replay server, helpers | `deploy/`, `scripts/lambda/lambda_cli.py` |
+| [utils](modules/utils/) | Provisioning, replay server, helpers | `scripts/deploy/`, `scripts/lambda/lambda_cli.py` |
 
 Compose them in a few lines via [`modules.Pipeline`](modules/pipeline.py):
 
@@ -161,13 +161,98 @@ assert report["status"] == "conformant"
 See the [capability map](modules/README.md). (Design and implementation plans
 live on the `experiments` branch.)
 
+## Ideas & use cases
+
+> **In one sentence:** this project makes AI systems *reproducible and provable* —
+> two different computers running the same model give the **exact same answer,
+> bit for bit** — which lets you prove what an AI system actually did.
+
+Each idea below is written plainly first, with a pointer for engineers who want to
+jump straight to the code.
+
+### Why reproducibility matters (the plain version)
+
+Normally, run an AI model twice and you can get slightly different answers — even
+on the same input. That tiny wobble makes it impossible to *prove* anything: you
+can't tell an honest mistake from tampering, or reproduce a result exactly.
+
+This stack removes the wobble. Same model + same input → **identical output,
+every time, on any matching machine.** Once outputs are exactly reproducible, you
+can audit them, verify them, and share them.
+
+### Ideas
+
+#### 🔁 "Two servers, identical answers"
+**For everyone:** run your AI service on two independent machines and get
+byte-for-byte identical results — proof the service is behaving consistently and
+hasn't been quietly changed.
+**→ Engineers:** `workflows/deterministic_inference_server.py`
+
+#### 🕵️ Catch a model doing something it shouldn't
+**For everyone:** check whether an AI service that's *supposed* to just answer
+questions is secretly training on your data or smuggling information out — using
+only outside evidence, without trusting the operator.
+**→ Engineers:** the prover-verifier demo + `workflows/verified_inference.py`
+
+#### ✅ Prove the math was actually done
+**For everyone:** get a cheap, independent receipt that the heavy computation a
+provider charged you for was really performed correctly.
+**→ Engineers:** matmul attestation (`modules/attestation`, Freivalds' algorithm)
+
+#### 📒 Share an experiment as a single file
+**For everyone:** instead of writing a page describing "here's what I ran,"
+hand a colleague one short file they can run to reproduce your exact workload.
+**→ Engineers:** the [recipe book](workflows/) (`workflows/`)
+
+#### 🎯 Reproducible fine-tuning (LoRA)
+**For everyone:** fine-tune a model in a way someone else can reproduce exactly,
+down to the environment it ran in.
+**→ Engineers:** `workflows/deterministic_lora_training.py`
+
+#### 📡 Tamper-evident network traffic
+**For everyone:** make the data a server sends over the wire perfectly
+predictable, so any deviation is a red flag.
+**→ Engineers:** `modules/network` (deterministic egress frames)
+
+#### 🧹 Prove a machine wiped its memory
+**For everyone:** get cryptographic proof that a computer actually erased
+sensitive data from its memory, rather than just claiming it did.
+**→ Engineers:** `modules/memory` (Proof of Secure Erasure)
+
+#### 🏗️ Reproducible builds
+**For everyone:** rebuild the exact same software environment from scratch and
+get an identical result — the foundation everything else rests on.
+**→ Engineers:** `modules/build` (`nix build .#oci`)
+
+### Try it in 30 seconds (no GPU needed)
+
+```bash
+python3 workflows/deterministic_inference_server.py
+# verify status : conformant
+# egress frames : 1 (reproducible: True)
+```
+
+That runs a small workload twice and confirms the two runs are byte-identical.
+
+### Go deeper
+
+- **[The recipe book](workflows/)** — runnable, copy-pasteable workflows
+- **[Capability modules](modules/)** — the building blocks, each with a documented interface
+- **[How it's organized](#repository-structure)** — the layout below
+
+### Have an idea?
+
+These are just starting points. If you have a workload you'd like to make
+reproducible or verifiable, the building blocks in [`modules/`](modules/) are
+meant to be combined — open an issue or a draft recipe and let's talk.
+
 ## Repository Structure
 
 Organized **by function** — each capability physically owns its code:
 
 ```
 modules/                Capability layer — each module owns its code, plus shared core/ + Pipeline
-  build/                Hermetic runtime: builder/ + lockfiles/   (flake.nix, nix/ live at root for Nix)
+  build/                Hermetic runtime: builder/ + lockfiles/ + nix/   (flake.nix + flake.lock live at root)
   inference/            Deterministic vLLM — the c3 config
     server/             Proxy server with POST/GET /manifest endpoint
     resolver/           Manifest + HF resolution -> lockfile
@@ -183,10 +268,9 @@ modules/                Capability layer — each module owns its code, plus sha
                         + schemas/ (JSON Schema contracts: manifest, lockfile, run_bundle, verify_report, attestation/replay)
 workflows/              Recipe book — runnable compositions of the modules
 experiments/            Experiments product code/gates/demos depend on (research-only ones live on the `experiments` branch)
-deploy/                 Lambda / vast / warden provisioning (utils-owned; kept at root for path-depth)
-docs/                   Ideas & use cases (the full docs set lives on the `experiments` branch)
-conformance/            Spec conformance catalog + release blockers (read by CI)
-flake.nix, nix/         Hermetic build (must live at repo root for Nix)
+scripts/deploy/         Lambda / vast / warden provisioning (utils-owned)
+tests/conformance/      Spec conformance catalog + release blockers (read by CI)
+flake.nix, flake.lock   Hermetic build entrypoint + pin (at root: src=self packages repo-wide code; callers invoke `.#`)
 ```
 
 ## Container image (out of date)

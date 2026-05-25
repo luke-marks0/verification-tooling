@@ -4,10 +4,10 @@
 # Sends identical request batches twice, converts captures to run bundles,
 # and runs the verifier to compare them.
 #
-# Usage: deploy/lambda/verify.sh [--host HOST] [--port PORT] [--requests N]
+# Usage: scripts/deploy/lambda/verify.sh [--host HOST] [--port PORT] [--requests N]
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 VENV="${VIRTUAL_ENV:-/home/ubuntu/venv}"
 HOST="127.0.0.1"
 PORT=8000
@@ -34,7 +34,7 @@ mkdir -p "${VERIFY_DIR}"
 # Find the active server's run directory
 SERVER_DIR=$(ls -dt /home/ubuntu/server-runs/serve-live* 2>/dev/null | head -1)
 if [ -z "$SERVER_DIR" ] || [ ! -f "$SERVER_DIR/manifest.resolved.json" ]; then
-    echo "ERROR: No active server found. Start the server first with deploy/lambda/serve.sh"
+    echo "ERROR: No active server found. Start the server first with scripts/deploy/lambda/serve.sh"
     exit 1
 fi
 

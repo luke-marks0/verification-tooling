@@ -6,8 +6,8 @@ cloud provisioning, the replay-server routine, and shared determinism helpers.
 **Interface (commands & helpers).**
 
 ```bash
-bash deploy/lambda/serve.sh --manifest manifests/qwen3-1.7b.manifest.json --port 8000
-bash deploy/vast/setup_cluster.sh     # multi-node Ray cluster
+bash scripts/deploy/lambda/serve.sh --manifest manifests/qwen3-1.7b.manifest.json --port 8000
+bash scripts/deploy/vast/setup_cluster.sh     # multi-node Ray cluster
 python3 scripts/lambda_cli.py ...     # Lambda Cloud API wrapper
 ```
 
@@ -22,11 +22,11 @@ run in, and provides the canonical-JSON / digest helpers the whole spine relies 
 **Requirements.** Cloud API keys (Lambda / Vast) for provisioning; nothing for
 the helpers.
 
-**Underlying code.** `deploy/{lambda,vast,warden}/`, `scripts/lambda_cli.py`,
+**Underlying code.** `scripts/deploy/{lambda,vast,warden}/`, `scripts/lambda_cli.py`,
 `modules/core/common/`.
 
 **Status.** Facade in `modules/utils/api.py` re-exports the canonical-JSON /
 digest / schema-validation helpers (`canonical_json_bytes`, `sha256_prefixed`,
 `validate_with_schema`, …). Provisioning remains rough shell scripts under
-`deploy/` (functional for manual ops); a "replay-server" sub-routine is a later
+`scripts/deploy/` (functional for manual ops); a "replay-server" sub-routine is a later
 follow-up.

@@ -8,11 +8,11 @@
 /modules/core/ @deterministic-serving/inference @deterministic-serving/platform
 
 # Conformance and CI
-/docs/conformance/ @deterministic-serving/platform @deterministic-serving/security
+/tests/conformance/ @deterministic-serving/platform @deterministic-serving/security
 /.github/workflows/ @deterministic-serving/platform
 /scripts/ci/ @deterministic-serving/platform
 /modules/core/schemas/ @deterministic-serving/platform @deterministic-serving/inference
 
 # Security and supply-chain
-/nix/ @deterministic-serving/security @deterministic-serving/platform
-/deploy/ @deterministic-serving/security @deterministic-serving/platform
+/modules/build/nix/ @deterministic-serving/security @deterministic-serving/platform
+/scripts/deploy/ @deterministic-serving/security @deterministic-serving/platform

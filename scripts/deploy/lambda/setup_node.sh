@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Setup a Lambda node for deterministic serving. Idempotent.
-# Usage: deploy/lambda/setup_node.sh <ip>
+# Usage: scripts/deploy/lambda/setup_node.sh <ip>
 set -euo pipefail
 
 IP="${1:?Usage: $0 <ip>}"
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 
 echo "=== Setting up node ${IP} ==="
 

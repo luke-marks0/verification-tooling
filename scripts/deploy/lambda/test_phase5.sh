@@ -5,7 +5,7 @@
 # Tests that the coordinator dispatches deterministically and
 # cross-pod verification passes.
 #
-# Usage: deploy/lambda/test_phase5.sh <node1_ip> <node2_ip>
+# Usage: scripts/deploy/lambda/test_phase5.sh <node1_ip> <node2_ip>
 set -euo pipefail
 
 NODE1="${1:-$(cat /tmp/lambda_instance_ip 2>/dev/null || echo '')}"
@@ -16,7 +16,7 @@ if [ -z "$NODE1" ] || [ -z "$NODE2" ]; then
     exit 1
 fi
 
-REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 
 echo "=== Phase 5 Integration Test: Multi-Node Replicated Serving ==="
 echo "Node 1: $NODE1"

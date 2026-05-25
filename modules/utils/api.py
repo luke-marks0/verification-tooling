@@ -2,7 +2,7 @@
 
 Re-exports the canonical-JSON / digest / schema-validation primitives the whole
 artifact spine relies on (``modules.core.common``). Cloud provisioning and the
-replay-server routine live in ``deploy/*`` (shell) and are documented in the
+replay-server routine live in ``scripts/deploy/*`` (shell) and are documented in the
 README rather than wrapped here.
 """
 from __future__ import annotations

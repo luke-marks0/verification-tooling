@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Poll Lambda Cloud until a batch-invariance-capable GPU (CC >= 9.0) is available, then launch it.
-# Usage: deploy/lambda/grab_instance.sh
+# Usage: scripts/deploy/lambda/grab_instance.sh
 set -euo pipefail
 
 WANTED_TYPES=("gpu_1x_gh200" "gpu_1x_h100_pcie" "gpu_1x_h100_sxm5")

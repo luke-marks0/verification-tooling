@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run vLLM batch invariance tests on a Lambda instance.
-# Usage: deploy/lambda/run_vllm_bi_tests.sh <ip>
+# Usage: scripts/deploy/lambda/run_vllm_bi_tests.sh <ip>
 set -euo pipefail
 
 IP="${1:-$(cat /tmp/lambda_instance_ip 2>/dev/null || echo '')}"

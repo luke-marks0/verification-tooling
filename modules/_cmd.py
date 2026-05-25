@@ -4,7 +4,7 @@
 by file path with ``importlib`` rather than importing ``cmd`` as a package.
 This lets the capability modules and the :class:`~modules.pipeline.Pipeline`
 compose the stages as plain Python calls (dict in / dict out) instead of
-shelling out — see ``docs/plans/repo-modularization.md``.
+shelling out — see the repo-modularization plan on the ``experiments`` branch.
 
 This is the one place that knows how the runner's provenance/pod arguments are
 defaulted; everything else composes through here.
