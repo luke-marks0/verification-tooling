@@ -433,7 +433,7 @@ class TestManifestFieldCoverage(unittest.TestCase):
 
         if missing_lines:
             self.fail(
-                f"Enum values not exercised:\n" + "\n".join(missing_lines)
+                "Enum values not exercised:\n" + "\n".join(missing_lines)
             )
 
     # -- helpers for enum coverage --

@@ -5,13 +5,13 @@ Tests are expected to FAIL (or raise) until the bugs are fixed.
 """
 from __future__ import annotations
 
-import json
 import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from tests.helpers import read_json, write_json
+from tests.helpers import read_json
 
 
 class TestBug1RunnerMockMode(unittest.TestCase):
@@ -28,16 +28,16 @@ class TestBug1RunnerMockMode(unittest.TestCase):
             built = tdir / "built.json"
             out = tdir / "run"
 
-            run_cmd(["python3", "modules/inference/resolver/main.py",
+            run_cmd([sys.executable, "modules/inference/resolver/main.py",
                      "--manifest", manifest_path,
                      "--lockfile-out", str(lockfile)])
-            run_cmd(["python3", "modules/build/builder/main.py",
+            run_cmd([sys.executable, "modules/build/builder/main.py",
                      "--lockfile", str(lockfile),
                      "--lockfile-out", str(built)])
 
             import subprocess
             result = subprocess.run(
-                ["python3", "modules/inference/runner/main.py",
+                [sys.executable, "modules/inference/runner/main.py",
                  "--manifest", manifest_path,
                  "--lockfile", str(built),
                  "--out-dir", str(out),
@@ -99,7 +99,9 @@ class TestBug3UlpComparisonWrong(unittest.TestCase):
 
     def test_ulp_comparison_large_values(self) -> None:
         """At large magnitude, values 1 ULP apart should pass with ulp=1."""
-        import importlib, sys, struct
+        import importlib
+        import sys
+        import struct
         spec = importlib.util.spec_from_file_location(
             "verifier_main", "modules/attestation/verifier/main.py",
             submodule_search_locations=[],
@@ -137,7 +139,7 @@ class TestBug3UlpComparisonWrong(unittest.TestCase):
         result2 = _compare_observable("ulp", [val], [two_away], comp)
         self.assertFalse(
             result2,
-            f"ULP comparison should fail for values 2 ULPs apart with ulp=1"
+            "ULP comparison should fail for values 2 ULPs apart with ulp=1"
         )
 
 

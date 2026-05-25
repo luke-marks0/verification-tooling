@@ -3,8 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import unittest
-from ctypes import c_uint8
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from modules.network.networkdet.backend_dpdk import DPDKBackend
 from modules.network.networkdet.config import NetStackConfig

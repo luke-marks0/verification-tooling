@@ -20,4 +20,15 @@ while IFS= read -r pyfile; do
   python3 -m py_compile "$pyfile"
 done < <(find scripts tests modules workflows -type f -name '*.py' | sort)
 
+# Ruff lint over the product surface (config + ignores in pyproject.toml). Run via
+# uv (pinned ruff from uv.lock) when available; skip gracefully otherwise so the
+# script still runs on a bare checkout.
+if command -v uv >/dev/null 2>&1; then
+  uv run ruff check modules workflows scripts tests
+elif command -v ruff >/dev/null 2>&1; then
+  ruff check modules workflows scripts tests
+else
+  log "uv/ruff not available; skipping ruff lint"
+fi
+
 log "Lint checks passed"

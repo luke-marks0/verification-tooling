@@ -19,7 +19,6 @@ from modules.inference.manifest.model import (
     ArtifactInput,
     ArtifactType,
     Comparator,
-    ComparisonConfig,
     ComparisonMode,
     Manifest,
     RequestItem,

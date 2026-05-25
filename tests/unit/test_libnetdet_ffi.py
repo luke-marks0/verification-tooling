@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import os
 import unittest
-from ctypes import c_uint8
 from unittest.mock import MagicMock, patch
 
 from modules.network.networkdet.libnetdet_ffi import LibNetDet, TxResult, _find_library

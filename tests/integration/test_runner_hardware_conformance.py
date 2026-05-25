@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -24,12 +25,12 @@ class TestRunnerHardwareConformance(unittest.TestCase):
 
             resolved = tdir / "resolved.lock.json"
             built = tdir / "built.lock.json"
-            run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", str(manifest_path), "--lockfile-out", str(resolved)])
-            run_cmd(["python3", "modules/build/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built)])
+            run_cmd([sys.executable, "modules/inference/resolver/main.py", "--manifest", str(manifest_path), "--lockfile-out", str(resolved)])
+            run_cmd([sys.executable, "modules/build/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built)])
 
             proc = subprocess.run(
                 [
-                    "python3",
+                    sys.executable,
                     "modules/inference/runner/main.py", "--mode", "mock",
                     "--manifest",
                     str(manifest_path),
@@ -68,12 +69,12 @@ class TestRunnerHardwareConformance(unittest.TestCase):
             report = tdir / "verify_report.json"
             summary = tdir / "verify_summary.txt"
 
-            run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", str(manifest_path), "--lockfile-out", str(resolved)])
-            run_cmd(["python3", "modules/build/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built)])
+            run_cmd([sys.executable, "modules/inference/resolver/main.py", "--manifest", str(manifest_path), "--lockfile-out", str(resolved)])
+            run_cmd([sys.executable, "modules/build/builder/main.py", "--lockfile", str(resolved), "--lockfile-out", str(built)])
 
             run_cmd(
                 [
-                    "python3",
+                    sys.executable,
                     "modules/inference/runner/main.py", "--mode", "mock",
                     "--manifest",
                     str(manifest_path),
@@ -85,7 +86,7 @@ class TestRunnerHardwareConformance(unittest.TestCase):
             )
             run_cmd(
                 [
-                    "python3",
+                    sys.executable,
                     "modules/inference/runner/main.py", "--mode", "mock",
                     "--manifest",
                     str(manifest_path),
@@ -109,7 +110,7 @@ class TestRunnerHardwareConformance(unittest.TestCase):
 
             run_cmd(
                 [
-                    "python3",
+                    sys.executable,
                     "modules/attestation/verifier/main.py",
                     "--baseline",
                     str(run_base / "run_bundle.v1.json"),

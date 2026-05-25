@@ -15,7 +15,6 @@ from modules.attestation.freivalds import (
     GENESIS_CHAIN_HASH,
     MatmulSpec,
     Response,
-    Tolerance,
     execute_streaming_challenge,
     fold_chain_hash,
     verify_streaming_response,

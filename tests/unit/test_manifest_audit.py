@@ -1,7 +1,6 @@
 """Unit tests for the optional `audit` block on the manifest."""
 from __future__ import annotations
 
-import copy
 import json
 import sys
 import unittest

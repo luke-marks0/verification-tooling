@@ -26,11 +26,8 @@ import argparse
 import http.server
 import json
 import hashlib
-import socket
-import struct
 import statistics
 import sys
-import threading
 import time
 from pathlib import Path
 

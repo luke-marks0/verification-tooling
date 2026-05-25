@@ -8,7 +8,6 @@ from modules.network.networkdet.tcp import (
     ACK,
     FIN,
     PSH,
-    RST,
     SYN,
     DeterministicTCPConnection,
     TCPState,

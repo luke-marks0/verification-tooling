@@ -15,8 +15,6 @@ from __future__ import annotations
 
 import json
 import os
-import signal
-import socket
 import struct
 import subprocess
 import sys
@@ -28,7 +26,6 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(_
 sys.path.insert(0, PROJECT_ROOT)
 
 from modules.network.networkdet.userspace_tcp_server import (
-    FULL_RESPONSE,
     UserspaceServer,
     get_gateway_mac,
     get_interface_info,
@@ -246,7 +243,7 @@ def test_deterministic_segmentation(interface: str, port: int, local_ip: str, ms
                 print(f"  WARNING: Non-MSS segment size {size} (expected {mss})")
         return True
     else:
-        print(f"FAIL: Segmentation differs between runs")
+        print("FAIL: Segmentation differs between runs")
         print(f"  Run 0: {results[0] if results else 'empty'}")
         print(f"  Run 1: {results[1] if len(results) > 1 else 'empty'}")
         return False

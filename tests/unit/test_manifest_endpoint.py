@@ -1,14 +1,12 @@
 """Unit tests for manifest validation and enforcement (no GPU needed)."""
 from __future__ import annotations
 
-import copy
 import json
 import os
 import pathlib
 import sys
 import tempfile
 import unittest
-from unittest import mock
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
@@ -471,7 +469,7 @@ class TestClosureHash(unittest.TestCase):
 class TestCheckHardware(unittest.TestCase):
     """Hardware conformance check via _check_hardware (pure function, no mocking)."""
 
-    def _probe(self, **overrides) -> "GpuProbe":
+    def _probe(self, **overrides) -> "GpuProbe":  # noqa: F821  (GpuProbe imported locally below)
         from modules.inference.manifest.model import GpuProbe
         defaults = dict(
             available=True, name="NVIDIA GH200 480GB", count=1,

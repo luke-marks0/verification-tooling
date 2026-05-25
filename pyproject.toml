@@ -18,9 +18,24 @@ dependencies = [
 dev = [
     "hypothesis",
     "matplotlib",
+    "ruff",
 ]
 
 # This repo is an application (modules/ + workflows/), not a pip-installable
 # package — uv manages the environment but does not try to build/install it.
 [tool.uv]
 package = false
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+# experiments/ is research code with its own conventions; lint the product surface.
+extend-exclude = ["experiments", ".venv"]
+
+[tool.ruff.lint]
+# Default rule set (pyflakes F + pycodestyle E4/E7/E9), minus carve-outs for this
+# repo's intentional patterns and a few style nits not yet enforced:
+#   E402 — modules set sys.path and the c3 determinism env BEFORE importing
+#          torch/vllm, so module-level imports legitimately follow code.
+#   F841/E731/E741 — minor style; deferred (incremental adoption).
+ignore = ["E402", "F841", "E731", "E741"]

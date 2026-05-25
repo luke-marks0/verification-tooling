@@ -163,7 +163,6 @@ def _verify_ip_checksum(frame: bytes) -> bool:
 
 
 def _verify_tcp_checksum(frame: bytes) -> bool:
-    import socket
     ip_start = 14
     ihl = frame[ip_start] & 0x0F
     ip_total = struct.unpack("!H", frame[ip_start + 2:ip_start + 4])[0]

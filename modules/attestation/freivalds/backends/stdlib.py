@@ -19,7 +19,6 @@ accepted in tolerance mode).
 """
 from __future__ import annotations
 
-import struct
 import time
 from typing import Any
 
@@ -98,7 +97,7 @@ class StdlibBackend:
         _check_dtype_supported(dtype_b)
         _check_dtype_supported(dtype_c)
         if _is_int(dtype_acc) and not _is_int(dtype_a):
-            raise ValueError(f"int accumulator with float input not supported here")
+            raise ValueError("int accumulator with float input not supported here")
 
         M = len(A)
         K = len(A[0]) if M else 0

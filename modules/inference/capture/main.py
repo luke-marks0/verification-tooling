@@ -14,7 +14,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 from pathlib import Path
 import sys
@@ -29,7 +28,6 @@ from modules.core.common.deterministic import (
     canonical_json_bytes,
     canonical_json_text,
     compute_bundle_digest,
-    compute_lockfile_digest,
     sha256_prefixed,
     utc_now_iso,
 )

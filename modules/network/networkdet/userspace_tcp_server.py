@@ -37,7 +37,6 @@ from modules.network.networkdet.ip import IPV4_HEADER_LEN, PROTO_TCP, Determinis
 from modules.network.networkdet.tcp import (
     ACK,
     FIN,
-    PSH,
     RST,
     SYN,
     TCP_HEADER_LEN,
