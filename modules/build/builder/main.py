@@ -70,12 +70,15 @@ def _component_descriptor(name: str, selected: list[dict[str, Any]]) -> dict[str
 
 
 def _collect_closure_components(artifacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    # The software stack is pinned by the Nix runtime closure
+    # (``runtime_closure_digest`` / ``build.nix_closure``), not by per-component
+    # manifest artifacts. If a manifest happens to enumerate them they're
+    # recorded here as a bill of materials, but absence is not an error.
     components: list[dict[str, Any]] = []
     for name, allowed_types in CLOSURE_COMPONENT_RULES:
         selected = _component_artifacts(artifacts, allowed_types)
         if len(selected) == 0:
-            allowed = ", ".join(sorted(allowed_types))
-            raise ValidationError(f"Lockfile missing required closure component '{name}' ({allowed})")
+            continue
         components.append(_component_descriptor(name, selected))
     return sorted(components, key=lambda item: str(item["name"]))
 
@@ -205,9 +208,11 @@ def _query_nix_closure(nix_store_paths: list[str]) -> dict[str, Any]:
     }
 
 
-def _oci_image_descriptor(oci_artifacts: list[dict[str, Any]]) -> dict[str, Any]:
+def _oci_image_descriptor(oci_artifacts: list[dict[str, Any]]) -> dict[str, Any] | None:
+    # Optional: only present when the manifest enumerates OCI artifacts. The
+    # authoritative image is the Nix-built closure (``build.nix_closure``).
     if len(oci_artifacts) == 0:
-        raise ValidationError("Built lockfile must contain at least one immutable OCI artifact")
+        return None
 
     preferred = next(
         (item for item in oci_artifacts if item["artifact_type"] == "serving_stack"),
@@ -244,11 +249,11 @@ def _attestation_statement(
     closure_inputs_digest: str,
     components: list[dict[str, Any]],
     oci_artifacts: list[dict[str, Any]],
-    oci_image: dict[str, Any],
+    oci_image: dict[str, Any] | None,
     nix_closure: dict[str, Any],
     collective_artifacts: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    return {
+    statement: dict[str, Any] = {
         "builder_system": builder_system,
         "closure_uri": closure_uri,
         "closure_inputs_digest": closure_inputs_digest,
@@ -267,10 +272,12 @@ def _attestation_statement(
             }
             for item in oci_artifacts
         ],
-        "oci_image": oci_image,
         "nix_closure": nix_closure,
         "collective_stack_artifacts": collective_artifacts,
     }
+    if oci_image is not None:
+        statement["oci_image"] = oci_image
+    return statement
 
 
 def build_runtime(
@@ -327,16 +334,18 @@ def build_runtime(
     lockfile["artifacts"] = artifacts
     lockfile["runtime_closure_digest"] = closure_inputs_digest
     lockfile["generated_at"] = deterministic_timestamp
-    lockfile["build"] = {
+    build_section: dict[str, Any] = {
         "builder_system": builder_system,
         "closure_uri": closure_uri,
         "closure_inputs_digest": closure_inputs_digest,
         "components": components,
         "oci_artifacts": oci_artifacts,
-        "oci_image": oci_image,
         "nix_closure": nix_closure,
         "collective_stack_artifacts": collective_artifacts,
     }
+    if oci_image is not None:
+        build_section["oci_image"] = oci_image
+    lockfile["build"] = build_section
 
     statement = _attestation_statement(
         builder_system=builder_system,

@@ -248,36 +248,6 @@
       "source_uri": "hf://Qwen/Qwen3-30B-A3B/tokenizer_config.json"
     },
     {
-      "artifact_id": "serving-stack",
-      "artifact_type": "serving_stack",
-      "expected_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "immutable_ref": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "name": "vllm-stack",
-      "size_bytes": 2000,
-      "source_kind": "oci",
-      "source_uri": "oci://registry.example/vllm@sha256:1111111111111111111111111111111111111111111111111111111111111111"
-    },
-    {
-      "artifact_id": "cuda-lib",
-      "artifact_type": "cuda_lib",
-      "expected_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-      "immutable_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-      "name": "cuda-user-space",
-      "size_bytes": 3000,
-      "source_kind": "oci",
-      "source_uri": "oci://registry.example/cuda@sha256:2222222222222222222222222222222222222222222222222222222222222222"
-    },
-    {
-      "artifact_id": "kernel-lib",
-      "artifact_type": "kernel_library",
-      "expected_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-      "immutable_ref": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-      "name": "flash-attn",
-      "size_bytes": 400,
-      "source_kind": "s3",
-      "source_uri": "s3://mirror/flash-attn.whl"
-    },
-    {
       "artifact_id": "runtime-knobs",
       "artifact_type": "runtime_knob_set",
       "expected_digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
@@ -296,16 +266,6 @@
       "size_bytes": 64,
       "source_kind": "inline",
       "source_uri": "inline://requests"
-    },
-    {
-      "artifact_id": "compiled-ext",
-      "artifact_type": "compiled_extension",
-      "expected_digest": "sha256:abababababababababababababababababababababababababababababababab",
-      "immutable_ref": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "name": "xformers",
-      "size_bytes": 700,
-      "source_kind": "s3",
-      "source_uri": "s3://mirror/xformers.whl"
     }
   ],
   "comparison": {

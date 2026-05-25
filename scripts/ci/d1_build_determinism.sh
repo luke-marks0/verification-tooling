@@ -30,16 +30,12 @@ if left["canonicalization"]["lockfile_digest"] != right["canonicalization"]["loc
 if left["build"]["closure_inputs_digest"] != left["runtime_closure_digest"]:
     raise SystemExit("build.closure_inputs_digest must match runtime_closure_digest")
 
-required_components = {
-    "serving_stack",
-    "cuda_userspace_or_container",
-    "kernel_libraries",
-    "network_stack",
-    "pmd_driver",
-}
-component_names = {item["name"] for item in left["build"]["components"]}
-if component_names != required_components:
-    raise SystemExit(f"build.components mismatch: {component_names}")
+# The software stack is recorded via the Nix runtime closure
+# (build.nix_closure), not per-component manifest artifacts. The D1 invariant
+# is reproducibility: two identical builds must produce an identical build
+# profile (closure metadata included).
+if left["build"] != right["build"]:
+    raise SystemExit("build profile differs across identical builds")
 
 print("Builder determinism checks passed")
 PY

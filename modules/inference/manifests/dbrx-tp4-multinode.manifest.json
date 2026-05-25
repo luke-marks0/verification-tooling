@@ -13,26 +13,6 @@
       "source_uri": "hf://alpindale/dbrx-instruct/tokenizer_config.json"
     },
     {
-      "artifact_id": "compiled-ext",
-      "artifact_type": "compiled_extension",
-      "expected_digest": "sha256:abababababababababababababababababababababababababababababababab",
-      "immutable_ref": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      "name": "xformers",
-      "size_bytes": 700,
-      "source_kind": "s3",
-      "source_uri": "s3://mirror/xformers.whl"
-    },
-    {
-      "artifact_id": "cuda-lib",
-      "artifact_type": "cuda_lib",
-      "expected_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-      "immutable_ref": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
-      "name": "cuda-user-space",
-      "size_bytes": 3000,
-      "source_kind": "oci",
-      "source_uri": "oci://registry.example/cuda@sha256:2222222222222222222222222222222222222222222222222222222222222222"
-    },
-    {
       "artifact_id": "hf-generation_config-generation_config.json",
       "artifact_type": "generation_config",
       "expected_digest": "sha256:40cbcdb51ce81ad828d91f02d9586af72de443e862d3ce045995c20fd5dda374",
@@ -43,16 +23,6 @@
       "size_bytes": 117,
       "source_kind": "hf",
       "source_uri": "hf://alpindale/dbrx-instruct/generation_config.json"
-    },
-    {
-      "artifact_id": "kernel-lib",
-      "artifact_type": "kernel_library",
-      "expected_digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-      "immutable_ref": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
-      "name": "flash-attn",
-      "size_bytes": 400,
-      "source_kind": "s3",
-      "source_uri": "s3://mirror/flash-attn.whl"
     },
     {
       "artifact_id": "hf-config-config.json",
@@ -829,16 +799,6 @@
       "size_bytes": 64,
       "source_kind": "inline",
       "source_uri": "inline://runtime-knobs"
-    },
-    {
-      "artifact_id": "serving-stack",
-      "artifact_type": "serving_stack",
-      "expected_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "immutable_ref": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
-      "name": "vllm-stack",
-      "size_bytes": 2000,
-      "source_kind": "oci",
-      "source_uri": "oci://registry.example/vllm@sha256:1111111111111111111111111111111111111111111111111111111111111111"
     },
     {
       "artifact_id": "hf-tokenizer-tokenizer_config.json",

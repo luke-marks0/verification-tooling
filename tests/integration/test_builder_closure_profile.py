@@ -42,13 +42,14 @@ class TestBuilderClosureProfile(unittest.TestCase):
             self.assertEqual(build["nix_closure"]["closure_digest"], lockfile["runtime_closure_digest"])
             self.assertGreaterEqual(build["nix_closure"]["closure_size_bytes"], 1)
 
-            expected_components = {
-                "serving_stack",
-                "cuda_userspace_or_container",
-                "kernel_libraries",
-            }
-            component_names = {item["name"] for item in build["components"]}
-            self.assertEqual(component_names, expected_components)
+            # The software stack is pinned by the Nix runtime closure
+            # (runtime_closure_digest / build.nix_closure), not per-component
+            # manifest artifacts. A model-only manifest yields no components,
+            # no OCI artifacts, and no oci_image.
+            self.assertEqual(build["components"], [])
+            self.assertEqual(build["oci_artifacts"], [])
+            self.assertEqual(build["collective_stack_artifacts"], [])
+            self.assertNotIn("oci_image", build)
 
             artifacts_by_id = {item["artifact_id"]: item for item in lockfile["artifacts"]}
             for component in build["components"]:
@@ -56,9 +57,6 @@ class TestBuilderClosureProfile(unittest.TestCase):
                 for artifact_id in component["artifact_ids"]:
                     self.assertIn(artifact_id, artifacts_by_id)
 
-            self.assertGreaterEqual(len(build["oci_artifacts"]), 1)
-            self.assertEqual(build["collective_stack_artifacts"], [])
-            self.assertTrue(build["oci_image"]["image_ref"].startswith("oci://"))
             self.assertTrue(
                 any(item["attestation_type"] == "build_provenance" for item in lockfile["attestations"])
             )

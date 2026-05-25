@@ -17,12 +17,15 @@ In-pipeline (records the closure into the lockfile):
 
 ```python
 from modules import Pipeline
-pipe = Pipeline.from_manifest(manifest).resolve().build()   # wraps cmd/builder
+pipe = Pipeline.from_manifest(manifest).resolve().build()   # wraps modules/build/builder
 pipe.lockfile["runtime_closure_digest"]   # sha256:...
 ```
 
-**Artifacts.** Consumes `lockfile.v1`; enriches it with `build{}`
-(`builder_system`, `closure_uri`, `closure_inputs_digest`, components).
+**Artifacts.** Consumes `lockfile.v1`; enriches it with `build{}` —
+`builder_system`, `closure_uri`, `closure_inputs_digest`, and `nix_closure`
+(the software-stack pin). The real content-addressed closure is recorded when
+built against an actual Nix closure (`--nix-store-path` / `--closure-digest`, as
+the deploy path does); the default path records closure metadata only.
 
 **Requirements.** Nix with flakes. Clean build is 30–60 min; cached builds hit
 the Nix store. The OCI image pre-sets `VLLM_BATCH_INVARIANT=1`,
