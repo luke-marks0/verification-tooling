@@ -19,8 +19,8 @@ python3 -m unittest discover -s tests/determinism -v
 # Validate schemas
 bash scripts/ci/schema_gate.sh
 
-# Run the synthetic runner (no GPU)
-python3 modules/inference/runner/main.py --manifest modules/inference/manifests/qwen3-1.7b.manifest.json --lockfile <lockfile> --out-dir /tmp/run --mode synthetic
+# Run the mock runner (no GPU — wiring only, not a determinism proof)
+python3 modules/inference/runner/main.py --manifest modules/inference/manifests/qwen3-1.7b.manifest.json --lockfile <lockfile> --out-dir /tmp/run --mode mock
 ```
 
 ## Code layout

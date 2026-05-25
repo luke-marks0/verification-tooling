@@ -1,6 +1,6 @@
 """Smoke tests for the capability modules + recipe-book workflows.
 
-All synthetic / no-GPU. Mirrors the proven d2 offline flow
+All mock / no-GPU. Mirrors the proven d2 offline flow
 (resolve -> build -> run x2 -> verify == conformant), but through the
 ``modules.Pipeline`` and ``workflows`` public surface.
 """
@@ -24,17 +24,17 @@ MANIFEST = "tests/fixtures/positive/manifest.v1.example.json"
 
 
 class TestPipeline(unittest.TestCase):
-    def test_synthetic_pipeline_is_conformant(self) -> None:
+    def test_mock_pipeline_is_conformant(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             t = Path(td)
             pipe = Pipeline.from_manifest(MANIFEST).resolve().build()
-            pipe.run(t / "a").run(t / "b")
+            pipe.run(t / "a", mode="mock").run(t / "b", mode="mock")
             report = pipe.verify(report_out=t / "report.json", summary_out=t / "summary.txt")
             self.assertEqual(report["status"], "conformant")
 
     def test_verify_requires_two_runs(self) -> None:
         with tempfile.TemporaryDirectory() as td:
-            pipe = Pipeline.from_manifest(MANIFEST).resolve().build().run(Path(td) / "a")
+            pipe = Pipeline.from_manifest(MANIFEST).resolve().build().run(Path(td) / "a", mode="mock")
             with self.assertRaises(ValueError):
                 pipe.verify()
 
@@ -50,8 +50,8 @@ class TestNetworkFacade(unittest.TestCase):
 
 
 class TestWorkflows(unittest.TestCase):
-    def test_inference_server_workflow_synthetic(self) -> None:
-        result = deterministic_inference_server(MANIFEST, mode="synthetic")
+    def test_inference_server_workflow_mock(self) -> None:
+        result = deterministic_inference_server(MANIFEST, mode="mock")
         self.assertEqual(result["status"], "conformant")
         self.assertTrue(result["frames_match"])
         self.assertGreater(result["frame_count"], 0)

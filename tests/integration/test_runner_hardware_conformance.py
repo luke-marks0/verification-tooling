@@ -30,7 +30,7 @@ class TestRunnerHardwareConformance(unittest.TestCase):
             proc = subprocess.run(
                 [
                     "python3",
-                    "modules/inference/runner/main.py",
+                    "modules/inference/runner/main.py", "--mode", "mock",
                     "--manifest",
                     str(manifest_path),
                     "--lockfile",
@@ -74,7 +74,7 @@ class TestRunnerHardwareConformance(unittest.TestCase):
             run_cmd(
                 [
                     "python3",
-                    "modules/inference/runner/main.py",
+                    "modules/inference/runner/main.py", "--mode", "mock",
                     "--manifest",
                     str(manifest_path),
                     "--lockfile",
@@ -86,7 +86,7 @@ class TestRunnerHardwareConformance(unittest.TestCase):
             run_cmd(
                 [
                     "python3",
-                    "modules/inference/runner/main.py",
+                    "modules/inference/runner/main.py", "--mode", "mock",
                     "--manifest",
                     str(manifest_path),
                     "--lockfile",

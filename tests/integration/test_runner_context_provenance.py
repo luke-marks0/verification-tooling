@@ -19,7 +19,7 @@ class TestRunnerContextProvenance(unittest.TestCase):
             run_cmd(["python3", "modules/inference/resolver/main.py", "--manifest", manifest, "--lockfile-out", str(lock_resolved)])
             run_cmd(["python3", "modules/build/builder/main.py", "--lockfile", str(lock_resolved), "--lockfile-out", str(lock_built)])
             run_cmd(
-                ["python3", "modules/inference/runner/main.py", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(run_dir)],
+                ["python3", "modules/inference/runner/main.py", "--mode", "mock", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(run_dir)],
                 env={
                     "RUNNER_POD_MANIFEST_PATH": "/run-inputs/manifest.json",
                     "RUNNER_POD_LOCKFILE_PATH": "/run-inputs/lockfile.json",

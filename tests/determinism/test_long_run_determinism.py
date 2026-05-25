@@ -20,7 +20,7 @@ class TestLongRunDeterminism(unittest.TestCase):
             digest_sets = []
             for idx in range(30):
                 out = tdir / f"run-{idx:02d}"
-                run_cmd(["python3", "modules/inference/runner/main.py", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(out)])
+                run_cmd(["python3", "modules/inference/runner/main.py", "--mode", "mock", "--manifest", manifest, "--lockfile", str(lock_built), "--out-dir", str(out)])
                 bundle = read_json(out / "run_bundle.v1.json")
                 digest_sets.append(
                     {

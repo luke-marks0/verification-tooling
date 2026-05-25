@@ -71,10 +71,10 @@ class TestMemoryFacade(unittest.TestCase):
 
 
 class TestVerifiedInferenceWorkflow(unittest.TestCase):
-    def test_verified_inference_synthetic(self) -> None:
+    def test_verified_inference_mock(self) -> None:
         from workflows.verified_inference import verified_inference
 
-        result = verified_inference(MANIFEST, mode="synthetic")
+        result = verified_inference(MANIFEST, mode="mock")
         self.assertEqual(result["run_status"], "conformant")
         self.assertTrue(result["attestation_passed"])
 

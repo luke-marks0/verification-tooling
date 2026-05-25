@@ -16,7 +16,7 @@ Env vars MUST be set **before** `import torch`/`import vllm`. They're exposed as
 ```python
 from modules.inference import C3_ENV, run_inference, verify_runs
 
-run_inference(manifest, lockfile, "/tmp/run-a", mode="synthetic")  # or mode="vllm"
+run_inference(manifest, lockfile, "/tmp/run-a", mode="mock")  # no-GPU stub; mode="vllm" = real inference
 report = verify_runs("/tmp/run-a/run_bundle.v1.json",
                      "/tmp/run-b/run_bundle.v1.json",
                      report_out="/tmp/report.json", summary_out="/tmp/summary.txt")
@@ -27,8 +27,8 @@ assert report["status"] == "conformant"
 (tokens, logits, network egress) and `verify_report.v1`.
 
 **Modes / requirements.**
-- `synthetic` — no GPU; deterministic stub observables (CI, local dev).
-- `vllm` — real inference; needs a GPU + vLLM. Serve long-running via `modules/inference/server`.
+- `vllm` (default) — real inference; needs a GPU + vLLM. Serve long-running via `modules/inference/server`.
+- `mock` — no GPU; stub observables for wiring/CI/local dev. NOT real inference, and not a determinism proof (two mock runs match by construction).
 
 **Example.** `workflows/deterministic_inference_server.py`.
 

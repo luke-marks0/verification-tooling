@@ -7,8 +7,11 @@ underlying compute was done honestly.
 
     python3 workflows/verified_inference.py
 
-Synthetic inference + the pure-Python stdlib attestation backend by default
-(no GPU). Pass ``--mode vllm`` on a GPU box for real inference.
+Defaults to ``--mode vllm`` (real inference) + the pure-Python stdlib attestation
+backend. Pass ``--mode mock`` for a no-GPU wiring smoke test — NOT a determinism
+proof. (Note: the attestation checks a fixed matmul batch, independent of the
+inference run; it proves the attestation machinery works, not that this run's
+matmuls were attested.)
 """
 from __future__ import annotations
 
@@ -44,7 +47,7 @@ def _attestation_challenge() -> Challenge:
 def verified_inference(
     manifest_path: str | Path,
     *,
-    mode: str = "synthetic",
+    mode: str = "vllm",
     out_dir: str | Path | None = None,
 ) -> dict[str, Any]:
     """Run inference (twice, verify reproducible) + attest a matmul batch."""
@@ -65,14 +68,18 @@ def verified_inference(
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--manifest", default=DEFAULT_MANIFEST)
-    ap.add_argument("--mode", default="synthetic", choices=["synthetic", "vllm"])
+    ap.add_argument("--mode", default="vllm", choices=["mock", "vllm"])
     ap.add_argument("--out-dir", default=None)
     args = ap.parse_args(argv)
 
     result = verified_inference(args.manifest, mode=args.mode, out_dir=args.out_dir)
+    if args.mode == "mock":
+        print("mode         : mock (no GPU) — wiring smoke test, NOT a determinism proof")
     print(f"run verify   : {result['run_status']}")
     print(f"attestation  : {'passed' if result['attestation_passed'] else 'FAILED'}")
     print(f"bundles in   : {result['out_dir']}")
+    if args.mode == "mock":
+        print("note         : mock runs match by construction; run --mode vllm on a GPU to prove determinism")
     ok = result["run_status"] == "conformant" and result["attestation_passed"]
     return 0 if ok else 1
 

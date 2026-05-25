@@ -13,8 +13,9 @@ Usage::
     python3 workflows/deterministic_inference_server.py \\
         --manifest tests/fixtures/positive/manifest.v1.example.json
 
-Runs ``--mode synthetic`` by default (no GPU). Pass ``--mode vllm`` on a GPU box
-to exercise real inference through the same pipeline.
+Defaults to ``--mode vllm`` (real inference; needs a GPU + torch/vllm). Pass
+``--mode mock`` for a no-GPU wiring smoke test — it runs the full pipeline on a
+stub backend and is NOT a determinism proof (two mock runs match by construction).
 """
 from __future__ import annotations
 
@@ -37,7 +38,7 @@ DEFAULT_MANIFEST = str(REPO_ROOT / "tests" / "fixtures" / "positive" / "manifest
 def deterministic_inference_server(
     manifest_path: str | Path,
     *,
-    mode: str = "synthetic",
+    mode: str = "vllm",
     out_dir: str | Path | None = None,
 ) -> dict[str, Any]:
     """Build + serve (twice) + verify, then check egress is reproducible."""
@@ -66,14 +67,18 @@ def deterministic_inference_server(
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--manifest", default=DEFAULT_MANIFEST)
-    ap.add_argument("--mode", default="synthetic", choices=["synthetic", "vllm"])
+    ap.add_argument("--mode", default="vllm", choices=["mock", "vllm"])
     ap.add_argument("--out-dir", default=None)
     args = ap.parse_args(argv)
 
     result = deterministic_inference_server(args.manifest, mode=args.mode, out_dir=args.out_dir)
+    if args.mode == "mock":
+        print("mode          : mock (no GPU) — wiring smoke test, NOT a determinism proof")
     print(f"verify status : {result['status']}")
     print(f"egress frames : {result['frame_count']} (reproducible: {result['frames_match']})")
     print(f"bundles in    : {result['out_dir']}")
+    if args.mode == "mock":
+        print("note          : mock runs match by construction; run --mode vllm on a GPU to prove determinism")
     ok = result["status"] == "conformant" and result["frames_match"]
     return 0 if ok else 1
 

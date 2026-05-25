@@ -86,7 +86,7 @@ def run_vllm(
         resolved_env["VLLM_BATCH_INVARIANT"] = "1"
 
     # Imports deferred until AFTER the determinism env is set — and so this module
-    # still imports on machines without vLLM (synthetic mode / schema validation).
+    # still imports on machines without vLLM (mock mode / schema validation).
     import torch
     from vllm import LLM, SamplingParams
 

@@ -52,7 +52,7 @@ def run_inference(
     out_dir: Path,
     *,
     replica_id: str = "replica-0",
-    mode: str = "synthetic",
+    mode: str = "vllm",
     network_backend: str = "sim",
     runtime_hardware: dict[str, Any] | None = None,
     **kwargs: Any,

@@ -1,7 +1,7 @@
 """Deterministic inference — stable public API. See ``README.md``.
 
 Bitwise-deterministic vLLM serving via the "c3" config. Wraps the runner
-(synthetic or vLLM) and the verifier from the artifact spine.
+(mock or vLLM) and the verifier from the artifact spine.
 """
 from __future__ import annotations
 
@@ -27,12 +27,14 @@ def run_inference(
     lockfile: dict[str, Any],
     out_dir: str | Path,
     *,
-    mode: str = "synthetic",
+    mode: str = "vllm",
     **kwargs: Any,
 ) -> dict[str, Any]:
     """Run one deterministic inference pass -> ``out_dir/run_bundle.v1.json``.
 
-    ``mode="synthetic"`` needs no GPU; ``mode="vllm"`` runs real inference.
+    ``mode="vllm"`` (default) runs real inference; ``mode="mock"`` is a no-GPU
+    stub for wiring/CI — it is NOT real inference and proves nothing about
+    determinism.
     """
     return _cmd.run_inference(manifest, lockfile, Path(out_dir), mode=mode, **kwargs)
 

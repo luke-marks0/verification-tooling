@@ -12,12 +12,12 @@ no prose, no bespoke bash.
 
 ## Setup
 
-The synthetic path needs only a few small pure-Python packages (no GPU),
-pinned in `uv.lock`:
+The mock path needs only a few small pure-Python packages (no GPU), pinned in
+`uv.lock`:
 
 ```bash
 uv sync
-.venv/bin/python3 workflows/verified_inference.py     # -> conformant
+.venv/bin/python3 workflows/verified_inference.py --mode mock   # wiring check (not a determinism proof)
 ```
 
 Recipes can be run from any directory (the default manifest resolves relative to
@@ -28,8 +28,9 @@ NVIDIA box — see [`scripts/demo.sh`](../scripts/demo.sh).
 
 - Each recipe is importable (a function you can call) **and** runnable (a CLI with
   `main()`), so it's both a library example and a script.
-- Default to `--mode synthetic` / `--dry-run` so the recipe runs in CI with no GPU;
-  `--mode vllm` exercises the real path on a GPU box.
+- Recipes default to `--mode vllm` (the real determinism path). `--mode mock`
+  (or `--dry-run`) runs a no-GPU wiring check for CI/laptops — it is **not** a
+  determinism proof (mock runs match by construction).
 - GPU-only steps are clearly marked (see the `train()` integration point in the
   LoRA recipe).
 
@@ -37,4 +38,4 @@ NVIDIA box — see [`scripts/demo.sh`](../scripts/demo.sh).
 
 Compose `modules.Pipeline` and the capability facades; keep it ~100 lines and
 self-contained. Add a smoke check to `tests/modules/test_workflows_smoke.py` that
-exercises the synthetic path.
+exercises the mock path.

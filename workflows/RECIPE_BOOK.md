@@ -7,9 +7,9 @@ workload in prose or a bespoke bash script, you hand a colleague the file and sa
 vocabulary for deterministic workloads, built from the same primitives everyone
 else uses.
 
-Every recipe is **both importable and runnable**, and **defaults to a no‑GPU path**
-(`--mode synthetic` / `--dry-run`) so it runs in CI and on a laptop; switch to
-`--mode vllm` on a GPU box for the real thing.
+Every recipe is **both importable and runnable**. It defaults to `--mode vllm`
+(the real determinism path); pass `--mode mock` (or `--dry-run`) for a no‑GPU
+wiring check that runs in CI and on a laptop — **not** a determinism proof.
 
 ---
 
@@ -28,7 +28,7 @@ The skeleton every recipe follows:
 from modules import Pipeline
 from modules.<capability> import <verb>
 
-def my_recipe(manifest_path, *, mode="synthetic"):
+def my_recipe(manifest_path, *, mode="vllm"):
     pipe = Pipeline.from_manifest(manifest_path).resolve().build()
     pipe.run(out_a, mode=mode).run(out_b, mode=mode)
     report = pipe.verify(report_out=..., summary_out=...)
@@ -106,17 +106,17 @@ that the matmuls were computed correctly.
 
 1. Create `workflows/<name>.py` with a core function (importable) **and** a
    `main(argv)` CLI. Keep it ~100 lines and self-contained.
-2. Compose `modules.Pipeline` + the capability facades. Default to
-   `--mode synthetic` / a `--dry-run` so it runs without a GPU.
+2. Compose `modules.Pipeline` + the capability facades. Default to `--mode vllm`;
+   offer `--mode mock` (or a `--dry-run`) so it can also run without a GPU.
 3. Mark any GPU-only step explicitly (see the `train()` integration point in the
    LoRA recipe).
-4. Add a synthetic-path smoke check to `tests/modules/` so CI keeps it honest.
+4. Add a mock-path smoke check to `tests/modules/` so CI keeps it honest.
 5. Add a row to [`README.md`](README.md) and a section here.
 
 ---
 
 ## Status
 
-All three recipes are smoke-tested in `tests/modules/` (synthetic / CPU-only) and
+All three recipes are smoke-tested in `tests/modules/` (mock / CPU-only) and
 run end-to-end without a GPU. Candidate future recipes: deterministic multi-node
 serving, wipe-then-serve (memory + inference), and an audit/replay loop.

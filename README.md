@@ -80,10 +80,10 @@ Requirements:
 - ~5 GB free GPU memory (Qwen3-1.7B in bf16)
 - Outbound internet for the Hugging Face download
 
-### No GPU? Run the synthetic pipeline
+### No GPU? Run the mock pipeline (wiring check)
 
-Install the small CPU-only deps, then run the artifact spine on the synthetic
-backend (no model download, no network):
+Install the small CPU-only deps, then run the artifact spine on the mock backend —
+a wiring check (no model download, no network), **not** a determinism proof:
 
 ```bash
 uv sync   # installs the pinned CPU/test deps from uv.lock
@@ -93,7 +93,7 @@ tmp=$(mktemp -d)
   --lockfile-out $tmp/lock.json
 .venv/bin/python3 modules/build/builder/main.py --lockfile $tmp/lock.json --lockfile-out $tmp/built.json
 .venv/bin/python3 modules/inference/runner/main.py --manifest modules/inference/manifests/qwen3-1.7b.manifest.json \
-  --lockfile $tmp/built.json --out-dir $tmp/run --mode synthetic
+  --lockfile $tmp/built.json --out-dir $tmp/run --mode mock
 # Produces a run bundle with tokens, logits, and deterministic network frames.
 # (Add --resolve-hf to the resolver to re-resolve revisions against live HF; needs network + huggingface_hub.)
 ```
@@ -227,12 +227,15 @@ get an identical result — the foundation everything else rests on.
 ### Try it in 30 seconds (no GPU needed)
 
 ```bash
-python3 workflows/deterministic_inference_server.py
+uv run python3 workflows/deterministic_inference_server.py --mode mock
+# mode          : mock (no GPU) — wiring smoke test, NOT a determinism proof
 # verify status : conformant
 # egress frames : 1 (reproducible: True)
 ```
 
-That runs a small workload twice and confirms the two runs are byte-identical.
+`--mode mock` runs the whole pipeline on a CPU stub — a wiring check, not a
+determinism proof (the two mock runs match by construction). To actually *prove*
+bitwise determinism, run `--mode vllm` on a GPU box (see [`scripts/demo.sh`](scripts/demo.sh)).
 
 ### Go deeper
 
@@ -256,7 +259,7 @@ modules/                Capability layer — each module owns its code, plus sha
   inference/            Deterministic vLLM — the c3 config
     server/             Proxy server with POST/GET /manifest endpoint
     resolver/           Manifest + HF resolution -> lockfile
-    runner/             Manifest + lockfile -> run bundle (synthetic or vLLM)
+    runner/             Manifest + lockfile -> run bundle (mock or vLLM)
     capture/            Server capture log -> run bundle
     manifest/           Pydantic manifest model (typed validation)
     manifests/          Model manifests (Qwen3, Mistral-Large2, DBRX, Llama4-Scout, ... + multinode)

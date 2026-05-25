@@ -56,7 +56,7 @@ class Pipeline:
         self.lockfile = _cmd.build_runtime(self.lockfile, **kwargs)
         return self
 
-    def run(self, out_dir: str | Path, *, mode: str = "synthetic", **kwargs: Any) -> "Pipeline":
+    def run(self, out_dir: str | Path, *, mode: str = "vllm", **kwargs: Any) -> "Pipeline":
         """One deterministic run -> ``out_dir/run_bundle.v1.json`` (inference determinism)."""
         if self.lockfile is None:
             self.build()

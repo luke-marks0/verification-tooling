@@ -14,10 +14,10 @@ from pathlib import Path
 from tests.helpers import read_json, write_json
 
 
-class TestBug1RunnerSyntheticMode(unittest.TestCase):
-    """Verify the runner produces a valid bundle in synthetic mode."""
+class TestBug1RunnerMockMode(unittest.TestCase):
+    """Verify the runner produces a valid bundle in mock mode."""
 
-    def test_run_in_synthetic_mode_produces_bundle(self) -> None:
+    def test_run_in_mock_mode_produces_bundle(self) -> None:
         from tests.helpers import run_cmd
 
         manifest_path = "tests/fixtures/positive/manifest.v1.example.json"
@@ -40,7 +40,8 @@ class TestBug1RunnerSyntheticMode(unittest.TestCase):
                 ["python3", "modules/inference/runner/main.py",
                  "--manifest", manifest_path,
                  "--lockfile", str(built),
-                 "--out-dir", str(out)],
+                 "--out-dir", str(out),
+                 "--mode", "mock"],
                 capture_output=True, text=True,
             )
             self.assertEqual(result.returncode, 0, f"Runner failed: {result.stderr[-300:]}")

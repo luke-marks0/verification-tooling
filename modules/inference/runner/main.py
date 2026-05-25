@@ -270,7 +270,7 @@ def _env_or_default(cli_value: str | None, env_key: str, default: str) -> str:
     return default
 
 
-def _synthetic_observables(
+def _mock_observables(
     m: Manifest,
     manifest_dict: dict[str, Any],
     lockfile: dict[str, Any],
@@ -280,7 +280,7 @@ def _synthetic_observables(
     dpdk_port: int = 0,
     dpdk_eal_args: list[str] | None = None,
 ) -> tuple[list[dict[str, Any]], Any]:
-    """Generate synthetic observables for testing/CI (no GPU required).
+    """Generate mock (stub) observables for testing/CI — no GPU, NOT real inference.
 
     Returns (request_outputs, net_stack). net_stack is the DeterministicNetStack
     used to generate frames (or None if legacy backend).
@@ -339,7 +339,7 @@ def run(
     out_dir: Path,
     replica_id: str,
     *,
-    mode: str = "synthetic",
+    mode: str = "vllm",
     network_backend: str = "sim",
     runtime_hardware: dict[str, Any] | None = None,
     pod_manifest_path: str,
@@ -410,7 +410,7 @@ def run(
             response_bytes = canonical_json_bytes({"id": r["id"], "tokens": r["tokens"], "logits": r["logits"]})
             net.process_response(conn_index=idx, response_bytes=response_bytes)
     else:
-        request_outputs, net = _synthetic_observables(
+        request_outputs, net = _mock_observables(
             m, manifest_dict, lockfile, replica_id,
             network_backend=network_backend,
             dpdk_port=dpdk_port,
@@ -493,8 +493,8 @@ def run(
             for a in lockfile["artifacts"]
         ],
         "environment_info": {
-            "vllm_version": vllm_env_info["vllm_version"] if vllm_env_info else "0.1.0-synthetic",
-            "torch_version": vllm_env_info["torch_version"] if vllm_env_info else "2.5.0-synthetic",
+            "vllm_version": vllm_env_info["vllm_version"] if vllm_env_info else "0.1.0-mock",
+            "torch_version": vllm_env_info["torch_version"] if vllm_env_info else "2.5.0-mock",
             "cuda_version": vllm_env_info["cuda_version"] if vllm_env_info else "12.4",
             "driver_version": vllm_env_info["driver_version"] if vllm_env_info else observed_gpu.get("driver_version", m.hardware_profile.gpu.driver_version),
             "gpu_inventory": vllm_env_info["gpu_inventory"] if vllm_env_info else [observed_gpu.get("model", m.hardware_profile.gpu.model)],
@@ -596,8 +596,9 @@ def main() -> int:
     parser.add_argument("--lockfile", required=True, help="Lockfile JSON path")
     parser.add_argument("--out-dir", required=True, help="Output bundle directory")
     parser.add_argument("--replica-id", default="replica-0", help="Replica identifier")
-    parser.add_argument("--mode", default="synthetic", choices=["synthetic", "vllm"],
-                        help="Execution mode: synthetic (no GPU) or vllm (real inference)")
+    parser.add_argument("--mode", default="vllm", choices=["mock", "vllm"],
+                        help="Execution mode: vllm (real inference, default) or mock "
+                             "(no-GPU stub — wiring only, NOT a determinism proof)")
     parser.add_argument("--network-backend", default="sim", choices=["sim", "dpdk", "legacy"],
                         help="Network backend: sim (deterministic frames), dpdk (real NIC), legacy (synthetic hex)")
     parser.add_argument("--runtime-hardware", help="Optional observed runtime hardware profile JSON path")

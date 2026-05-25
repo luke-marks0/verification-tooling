@@ -22,8 +22,8 @@ RUN1="$TMP_DIR/run-1"
 
 python3 modules/inference/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
 python3 modules/build/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT"
-python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN0" --replica-id replica-0
-python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN1" --replica-id replica-1
+python3 modules/inference/runner/main.py --mode mock --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN0" --replica-id replica-0
+python3 modules/inference/runner/main.py --mode mock --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN1" --replica-id replica-1
 
 python3 - << 'PY' "$RUN0/observables/tokens.json" "$RUN1/observables/tokens.json"
 import json

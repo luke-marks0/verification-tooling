@@ -60,7 +60,7 @@ def assemble_plan(manifest_path: str | Path) -> dict[str, Any]:
 def train(manifest_path: str | Path, *, mode: str = "vllm") -> dict[str, Any]:
     """Execute deterministic LoRA training. Requires a GPU + vLLM/torch.
 
-    Intentionally not implemented for the synthetic/CI path: real LoRA training
+    Intentionally not implemented for the mock/CI path: real LoRA training
     is more than an inference pass. The deterministic *environment* is fully
     assembled by :func:`assemble_plan`; this is the GPU integration point.
     """

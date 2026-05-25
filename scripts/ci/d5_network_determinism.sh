@@ -18,8 +18,8 @@ SUMMARY_BAD="$TMP_DIR/verify_summary_bad.txt"
 
 python3 modules/inference/resolver/main.py --manifest "$MANIFEST" --lockfile-out "$RESOLVED"
 python3 modules/build/builder/main.py --lockfile "$RESOLVED" --lockfile-out "$BUILT"
-python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN1" --replica-id replica-0
-python3 modules/inference/runner/main.py --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN2" --replica-id replica-0
+python3 modules/inference/runner/main.py --mode mock --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN1" --replica-id replica-0
+python3 modules/inference/runner/main.py --mode mock --manifest "$MANIFEST" --lockfile "$BUILT" --out-dir "$RUN2" --replica-id replica-0
 
 python3 modules/attestation/verifier/main.py --baseline "$RUN1/run_bundle.v1.json" --candidate "$RUN2/run_bundle.v1.json" --report-out "$REPORT_OK" --summary-out "$SUMMARY_OK"
 
