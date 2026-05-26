@@ -7,7 +7,8 @@ bytes it has lying around. Rounds where `response == expected` count as
 passed.
 
 We don't bother with the full PoSE memory-fill phase here — that requires
-a real GPU node and is exercised by `experiments/memory_wipe`. For the
+a real GPU node and is exercised by the `memory_wipe` experiment on the
+`experiments` branch. For the
 prover-verifier demo, the honest-path protocol is enough to give the
 verdict engine a trustworthy "we ran K rounds and N passed" signal; the
 dishonest path is exercised by an adversarial workload in Phase 7.

@@ -3,9 +3,9 @@
 import time
 from dataclasses import dataclass, field
 
-from pose.noise import generate_blocks, generate_noise_bulk
-from pose.verifier import Verifier
-from pose.prover import Prover
+from .noise import generate_noise_bulk
+from .verifier import Verifier
+from .prover import Prover
 
 
 @dataclass

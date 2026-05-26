@@ -1,7 +1,7 @@
 """Generate the Phase 1 wipe report from a ProtocolResult."""
 
 from datetime import datetime, timezone
-from pose.protocol import ProtocolResult
+from .protocol import ProtocolResult
 
 
 def generate_report(result: ProtocolResult) -> dict:

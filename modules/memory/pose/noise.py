@@ -6,7 +6,6 @@ This makes generation both seekable (any block independently) and efficient
 (sequential blocks share cipher state).
 """
 
-import struct
 from typing import Iterator
 
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes

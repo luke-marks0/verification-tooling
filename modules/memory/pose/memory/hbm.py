@@ -5,7 +5,7 @@ transfers data via cudaMemcpy. This avoids CuPy's memory pool overhead
 and gives us exact control over GPU memory.
 """
 
-from pose.detect import get_cuda_runtime
+from ..detect import get_cuda_runtime
 
 
 class HbmRegion:

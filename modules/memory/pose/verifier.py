@@ -8,7 +8,7 @@ import os
 import secrets
 from typing import Iterator
 
-from pose.noise import generate_block, generate_blocks
+from .noise import generate_block, generate_blocks
 
 
 class Verifier:
