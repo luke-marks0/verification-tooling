@@ -80,6 +80,16 @@ def _benign_dataset(num_examples: int, seed: int) -> list[dict[str, str]]:
     return out
 
 
+def benign_arithmetic_dataset(num_examples: int, seed: int) -> list[dict[str, str]]:
+    """Public alias for `_benign_dataset` used by `demos/tap-train/`.
+
+    Same builder, same seed → byte-identical examples on both Host and Recomp
+    clusters. Re-exported under the stable name `benign_arithmetic` referenced
+    by `DatasetSpec.builder`.
+    """
+    return _benign_dataset(num_examples, seed)
+
+
 def _set_all_seeds(seed: int) -> None:
     """Belt-and-braces seeding. Each library that touches RNG gets the same seed."""
     import random as _r
@@ -110,7 +120,7 @@ def _enforce_training_determinism() -> None:
     torch.backends.cudnn.allow_tf32 = False
 
 
-def _hash_adapter_dir(adapter_dir: Path) -> str:
+def hash_adapter_dir(adapter_dir: Path) -> str:
     """SHA256 of the adapter checkpoint, computed from its on-disk bytes.
 
     Walks the dir in sorted order; for each file hashes both the relative path
@@ -130,11 +140,35 @@ def _hash_adapter_dir(adapter_dir: Path) -> str:
     return f"sha256:{h.hexdigest()}"
 
 
-def train_once(out_dir: Path) -> dict[str, Any]:
+# Backwards-compatible private alias preserved for any caller that imports the
+# old underscored name.
+_hash_adapter_dir = hash_adapter_dir
+
+
+def train_once(
+    out_dir: Path,
+    *,
+    cfg: dict[str, Any] | None = None,
+    dataset: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
     """Run one LoRA fine-tune pass. Returns metadata + adapter digest.
 
     Imports torch/transformers/peft *inside* the function so the dry-run path
     can run without them installed.
+
+    Parameters
+    ----------
+    out_dir:
+        Directory the adapter is saved into.
+    cfg:
+        Optional override of `TRAINING_CONFIG`. When None, the module-level
+        constant is used (the original two-pass demo path). When provided by
+        `demos/tap-train/`, callers must pass the same dict on both Host and
+        Recomp for the adapter-digest compare to hold.
+    dataset:
+        Optional pre-built dataset (list of `{"prompt": ..., "response": ...}`
+        dicts). When None, `_benign_dataset(cfg["num_examples"], cfg["seed"])`
+        is rebuilt in-process; same seed → byte-identical examples.
     """
     # Set c3 env BEFORE any torch/transformers import in this process.
     for k, v in C3_ENV.items():
@@ -143,14 +177,16 @@ def train_once(out_dir: Path) -> dict[str, Any]:
     # in C3_ENV. Also tell PyTorch to refuse non-deterministic algos.
     os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
 
+    if cfg is None:
+        cfg = TRAINING_CONFIG
+
     import torch
     _enforce_training_determinism()
-    _set_all_seeds(TRAINING_CONFIG["seed"])
+    _set_all_seeds(cfg["seed"])
 
     from transformers import AutoModelForCausalLM, AutoTokenizer
     from peft import LoraConfig, get_peft_model
 
-    cfg = TRAINING_CONFIG
     dtype = getattr(torch, cfg["dtype"])
 
     tokenizer = AutoTokenizer.from_pretrained(cfg["base_model"], trust_remote_code=True)
@@ -177,8 +213,13 @@ def train_once(out_dir: Path) -> dict[str, Any]:
     model = get_peft_model(model, lora_config)
     model.train()
 
-    # Build the dataset once (deterministic; same seed → same examples).
-    examples = _benign_dataset(cfg["num_examples"], cfg["seed"])
+    # Build the dataset once (deterministic; same seed → same examples). The
+    # caller may pass `dataset` explicitly — used by demos/tap-train when
+    # both clusters need to be byte-identical without re-running rng.
+    if dataset is None:
+        examples = _benign_dataset(cfg["num_examples"], cfg["seed"])
+    else:
+        examples = dataset
 
     def encode(ex: dict[str, str]) -> dict[str, "torch.Tensor"]:
         text = ex["prompt"] + "\n" + ex["response"]
@@ -201,6 +242,7 @@ def train_once(out_dir: Path) -> dict[str, Any]:
 
     losses: list[float] = []
     bs = cfg["batch_size"]
+    n_params_trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     for step in range(cfg["max_steps"]):
         # Deterministic batch ordering: cycle through encoded in fixed slices.
         start = (step * bs) % len(encoded)
@@ -220,11 +262,13 @@ def train_once(out_dir: Path) -> dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
     model.save_pretrained(out_dir)
 
-    adapter_digest = _hash_adapter_dir(out_dir)
+    adapter_digest = hash_adapter_dir(out_dir)
     return {
         "adapter_digest": adapter_digest,
         "final_loss": losses[-1] if losses else None,
         "loss_trajectory": losses,
+        "n_steps": len(losses),
+        "n_params_trainable": int(n_params_trainable),
         "config": cfg,
     }
 
